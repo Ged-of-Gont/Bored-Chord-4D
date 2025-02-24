@@ -313,6 +313,13 @@
         <button id="wireframeBtn" class="wave-type-btn" data-wireframe="off">OFF</button>
       </label>
     </div>
+	<div id="saveLoadSection" class="section">
+	  <button id="saveSettings">Save Settings</button>
+	  <button id="loadSettings">Load Settings</button>
+	  <!-- Hidden file input for loading settings -->
+	  <input type="file" id="loadSettingsFile" accept="application/json" style="display:none" />
+	</div>
+	
   </div>
 
   <!-- RIGHT TOOLBAR -->
@@ -942,6 +949,7 @@
       requestAnimationFrame(drawFrame);
     }
     requestAnimationFrame(drawFrame);
+	
   </script>
 
   <!-- Slider gradient fill -->
@@ -1006,5 +1014,70 @@
       scaleToolbar(controlsRight);
     });
   </script>
+  <script>
+	  // Function to collect all input and select values from the left toolbar
+	  function getSettings() {
+	    const settings = {};
+	    const elements = document.querySelectorAll("#controlsLeft input, #controlsLeft select");
+	    elements.forEach(el => {
+	      // For checkboxes, store whether they are checked; for others, store the value.
+	      if (el.type === "checkbox") {
+	        settings[el.id] = el.checked;
+	      } else {
+	        settings[el.id] = el.value;
+	      }
+	    });
+	    return settings;
+	  }
+
+	  // Function to apply settings to the left toolbar inputs and selects
+	  function setSettings(settings) {
+	    const elements = document.querySelectorAll("#controlsLeft input, #controlsLeft select");
+	    elements.forEach(el => {
+	      if (settings.hasOwnProperty(el.id)) {
+	        if (el.type === "checkbox") {
+	          el.checked = settings[el.id];
+	        } else {
+	          el.value = settings[el.id];
+	        }
+	        // Dispatch an input event to ensure any listeners update the UI
+	        el.dispatchEvent(new Event("input"));
+	      }
+	    });
+	  }
+
+	  // Save settings: Gather the settings and trigger a download as a JSON file.
+	  document.getElementById("saveSettings").addEventListener("click", () => {
+	    const settings = getSettings();
+	    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(settings, null, 2));
+	    const downloadAnchor = document.createElement("a");
+	    downloadAnchor.setAttribute("href", dataStr);
+	    downloadAnchor.setAttribute("download", "settings.json");
+	    document.body.appendChild(downloadAnchor);
+	    downloadAnchor.click();
+	    downloadAnchor.remove();
+	  });
+
+	  // Load settings: Trigger a click on the hidden file input.
+	  document.getElementById("loadSettings").addEventListener("click", () => {
+	    document.getElementById("loadSettingsFile").click();
+	  });
+
+	  // When a file is selected, read it and update the inputs.
+	  document.getElementById("loadSettingsFile").addEventListener("change", (event) => {
+	    const file = event.target.files[0];
+	    if (!file) return;
+	    const reader = new FileReader();
+	    reader.onload = (e) => {
+	      try {
+	        const settings = JSON.parse(e.target.result);
+	        setSettings(settings);
+	      } catch (err) {
+	        alert("Error parsing JSON: " + err);
+	      }
+	    };
+	    reader.readAsText(file);
+	  });
+  </script>	  
 </body>
 </html>
