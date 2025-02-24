@@ -302,7 +302,6 @@
 	  <button id="loadSettings" class="saveLoadBtn">Load Settings</button>
 	  <input type="file" id="loadSettingsFile" accept="application/json" style="display:none" />
 	</div>
-  	
 	
     </div>
     
@@ -1038,9 +1037,26 @@
     });
   </script>
  <script>
- // -- (A) HELPER FUNCTIONS for Wave/Wireframe Button UI -- //
+ // ------------------------------------------------------
+ // (A) Gather 4 frequencies to use for settings file name
+ // ------------------------------------------------------
+ 
+
+ function getFrequencyFileName() {
+   // Get the 4 freq fields from the left toolbar
+   const fx = document.getElementById("freqX").value;
+   const fy = document.getElementById("freqY").value;
+   const fz = document.getElementById("freqZ").value;
+   const fw = document.getElementById("freqW").value;
+
+   // Example final name: "3_4_5_6_BC4D.json"
+   return `${fx}_${fy}_${fz}_${fw}_BC4D.json`;
+ }
+
+ // ------------------------------------------------------
+ // (B) Wave/Wireframe button UI helpers (same as before)
+ // ------------------------------------------------------
  function updateWaveButtonUI(btn, waveState) {
-   // This matches the logic in your wave-type-btn click event:
    btn.dataset.wave = waveState;
    switch (waveState) {
      case 'off':
@@ -1065,7 +1081,6 @@
  }
 
  function updateWireframeButtonUI(btn, wireframeState) {
-   // Matches the logic in your wireframeBtn click event:
    btn.dataset.wireframe = wireframeState;
    if (wireframeState === 'on') {
      btn.textContent = 'ON';
@@ -1080,23 +1095,25 @@
    }
  }
 
- // -- (B) GATHER ALL SETTINGS => JSON -- //
+ // ------------------------------------------------------
+ // (C) Gather ALL current settings => JSON
+ // ------------------------------------------------------
  function getSettings() {
    const settings = {};
 
-   // 1) Grab all <input> & <select> from BOTH toolbars
-   //    (Ensures we also get phase checkboxes, rotation sliders, etc.)
-   const inputs = document.querySelectorAll("#controlsLeft input, #controlsLeft select, #controlsRight input, #controlsRight select");
-   inputs.forEach(el => {
+   // 1) Grab all <input>, <select> from BOTH left & right toolbars
+   const allInputs = document.querySelectorAll(
+     "#controlsLeft input, #controlsLeft select, #controlsRight input, #controlsRight select"
+   );
+   allInputs.forEach(el => {
      if (el.type === "checkbox") {
-       settings[el.id] = el.checked; // on/off
+       settings[el.id] = el.checked; 
      } else {
-       settings[el.id] = el.value;   // numeric or text
+       settings[el.id] = el.value;
      }
    });
 
-   // 2) Include wave‐type and wireframe buttons
-   //    Each has a data attribute to save (data-wave or data-wireframe)
+   // 2) wave‐type & wireframe button states
    const waveX = document.getElementById("waveTypeX");
    const waveY = document.getElementById("waveTypeY");
    const waveZ = document.getElementById("waveTypeZ");
@@ -1112,23 +1129,27 @@
    return settings;
  }
 
- // -- (C) APPLY SETTINGS FROM JSON -- //
+ // ------------------------------------------------------
+ // (D) Apply JSON settings to the UI
+ // ------------------------------------------------------
  function setSettings(settings) {
-   // 1) Apply <input> & <select> in both toolbars
-   const inputs = document.querySelectorAll("#controlsLeft input, #controlsLeft select, #controlsRight input, #controlsRight select");
-   inputs.forEach(el => {
+   // 1) Inputs/checkboxes/selects
+   const allInputs = document.querySelectorAll(
+     "#controlsLeft input, #controlsLeft select, #controlsRight input, #controlsRight select"
+   );
+   allInputs.forEach(el => {
      if (settings.hasOwnProperty(el.id)) {
        if (el.type === "checkbox") {
          el.checked = settings[el.id];
        } else {
          el.value = settings[el.id];
        }
-       // Trigger "input" so existing logic refreshes
+       // Trigger "input" so your existing logic updates
        el.dispatchEvent(new Event("input"));
      }
    });
 
-   // 2) Apply wave‐type & wireframe states
+   // 2) Wave/wireframe button states
    const waveX = document.getElementById("waveTypeX");
    const waveY = document.getElementById("waveTypeY");
    const waveZ = document.getElementById("waveTypeZ");
@@ -1152,28 +1173,35 @@
    }
  }
 
- // -- (D) HOOK UP SAVE / LOAD BUTTONS -- //
+ // ------------------------------------------------------
+ // (E) Hook Up the "Save" & "Load" Buttons
+ // ------------------------------------------------------
  document.getElementById("saveSettings").addEventListener("click", () => {
-   // Gather current states
+   // Gather current settings
    const settings = getSettings();
-   // Convert to a downloadable data URL
    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(settings, null, 2));
-   // Create a temporary link to download
+
+   // Build the automatic file name from freqX,freqY,freqZ,freqW
+   const fileName = getFrequencyFileName();
+
+   // Create a temporary <a> to download
    const downloadAnchor = document.createElement("a");
    downloadAnchor.setAttribute("href", dataStr);
-   downloadAnchor.setAttribute("download", "settings.json");
+   downloadAnchor.setAttribute("download", fileName);
    document.body.appendChild(downloadAnchor);
+
+   // Trigger the download
    downloadAnchor.click();
    downloadAnchor.remove();
  });
 
- // Clicking "Load Settings" -> triggers hidden file input
+ // "Load Settings" => triggers hidden file input
  document.getElementById("loadSettings").addEventListener("click", () => {
    document.getElementById("loadSettingsFile").click();
  });
 
- // On file chosen, read + parse JSON, then apply to UI
- document.getElementById("loadSettingsFile").addEventListener("change", (event) => {
+ // After choosing a file, parse it & apply
+ document.getElementById("loadSettingsFile").addEventListener("change", event => {
    const file = event.target.files[0];
    if (!file) return;
    const reader = new FileReader();
@@ -1188,6 +1216,7 @@
    reader.readAsText(file);
  });
  </script>
+ 
  
  
 </body>
