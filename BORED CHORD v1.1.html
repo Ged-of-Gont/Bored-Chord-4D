@@ -28,7 +28,7 @@
     }
     h4 {
       font-family: 'Martian Mono', monospace;
-      font-weight: 700;
+      font-weight: 600;
       font-size: 3.1em;
     }
     .section h4 {
@@ -179,6 +179,28 @@
       margin-top: -11.5px;
       outline: none;
     }
+	.saveLoadBtn {
+	  display: inline-block;
+	  background: var(--secondary); /* Red */
+	  color: var(--primary);        /* Off-white */
+	  font-family: 'Martian Mono', monospace;
+	  font-weight: 500;
+	  font-size: 1em;
+	  border: none;
+	  cursor: pointer;
+
+	  /* Adjust size/spacing as desired */
+	  width: 120px;
+	  height: 40px;
+	  margin: 10px 0;
+	}
+
+	/* Optionally add a hover or active style */
+	.saveLoadBtn:hover {
+	  background: var(--secondary-accent); /* e.g. spring green if you want a highlight */
+	  color: var(--background);            /* black-ish text or your choice */
+	}
+	
     .wave-type-btn {
       width: 50px;
       height: 50px;
@@ -259,7 +281,7 @@
         <button id="waveTypeW" class="wave-type-btn" data-wave="sine">SINE</button>
       </label>
       <label class="preset">
-        <span>Preset:</span>
+        <span>Chord Presets:</span>
         <select id="chordPreset">
           <option value="">--Select Preset--</option>
           <option value="maj7">Major 7</option>
@@ -274,6 +296,14 @@
           <option value="augmaj7">Augmented Major 7</option>
         </select>
       </label>
+	  
+	<div id="saveLoadSection" class="section">
+	  <button id="saveSettings" class="saveLoadBtn">Save Settings</button>
+	  <button id="loadSettings" class="saveLoadBtn">Load Settings</button>
+	  <input type="file" id="loadSettingsFile" accept="application/json" style="display:none" />
+	</div>
+  	
+	
     </div>
     
     <div class="section" id="lfoSection">
@@ -313,13 +343,6 @@
         <button id="wireframeBtn" class="wave-type-btn" data-wireframe="off">OFF</button>
       </label>
     </div>
-	<div id="saveLoadSection" class="section">
-	  <button id="saveSettings">Save Settings</button>
-	  <button id="loadSettings">Load Settings</button>
-	  <!-- Hidden file input for loading settings -->
-	  <input type="file" id="loadSettingsFile" accept="application/json" style="display:none" />
-	</div>
-	
   </div>
 
   <!-- RIGHT TOOLBAR -->
