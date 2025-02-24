@@ -1014,70 +1014,158 @@
       scaleToolbar(controlsRight);
     });
   </script>
-  <script>
-	  // Function to collect all input and select values from the left toolbar
-	  function getSettings() {
-	    const settings = {};
-	    const elements = document.querySelectorAll("#controlsLeft input, #controlsLeft select");
-	    elements.forEach(el => {
-	      // For checkboxes, store whether they are checked; for others, store the value.
-	      if (el.type === "checkbox") {
-	        settings[el.id] = el.checked;
-	      } else {
-	        settings[el.id] = el.value;
-	      }
-	    });
-	    return settings;
-	  }
+ <script>
+ // -- (A) HELPER FUNCTIONS for Wave/Wireframe Button UI -- //
+ function updateWaveButtonUI(btn, waveState) {
+   // This matches the logic in your wave-type-btn click event:
+   btn.dataset.wave = waveState;
+   switch (waveState) {
+     case 'off':
+       btn.textContent = 'OFF';
+       btn.style.background = 'var(--background)';
+       btn.style.color = 'var(--secondary)';
+       btn.style.border = '3px solid var(--secondary)';
+       break;
+     case 'sine':
+       btn.textContent = 'SINE';
+       btn.style.background = 'var(--secondary)';
+       btn.style.color = 'var(--primary)';
+       btn.style.border = 'none';
+       break;
+     case 'triangle':
+       btn.textContent = 'TRI.';
+       btn.style.background = 'var(--secondary)';
+       btn.style.color = 'var(--primary)';
+       btn.style.border = 'none';
+       break;
+   }
+ }
 
-	  // Function to apply settings to the left toolbar inputs and selects
-	  function setSettings(settings) {
-	    const elements = document.querySelectorAll("#controlsLeft input, #controlsLeft select");
-	    elements.forEach(el => {
-	      if (settings.hasOwnProperty(el.id)) {
-	        if (el.type === "checkbox") {
-	          el.checked = settings[el.id];
-	        } else {
-	          el.value = settings[el.id];
-	        }
-	        // Dispatch an input event to ensure any listeners update the UI
-	        el.dispatchEvent(new Event("input"));
-	      }
-	    });
-	  }
+ function updateWireframeButtonUI(btn, wireframeState) {
+   // Matches the logic in your wireframeBtn click event:
+   btn.dataset.wireframe = wireframeState;
+   if (wireframeState === 'on') {
+     btn.textContent = 'ON';
+     btn.style.background = 'var(--secondary)';
+     btn.style.color = 'var(--primary)';
+     btn.style.border = 'none';
+   } else {
+     btn.textContent = 'OFF';
+     btn.style.background = 'var(--background)';
+     btn.style.color = 'var(--secondary)';
+     btn.style.border = '3px solid var(--secondary)';
+   }
+ }
 
-	  // Save settings: Gather the settings and trigger a download as a JSON file.
-	  document.getElementById("saveSettings").addEventListener("click", () => {
-	    const settings = getSettings();
-	    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(settings, null, 2));
-	    const downloadAnchor = document.createElement("a");
-	    downloadAnchor.setAttribute("href", dataStr);
-	    downloadAnchor.setAttribute("download", "settings.json");
-	    document.body.appendChild(downloadAnchor);
-	    downloadAnchor.click();
-	    downloadAnchor.remove();
-	  });
+ // -- (B) GATHER ALL SETTINGS => JSON -- //
+ function getSettings() {
+   const settings = {};
 
-	  // Load settings: Trigger a click on the hidden file input.
-	  document.getElementById("loadSettings").addEventListener("click", () => {
-	    document.getElementById("loadSettingsFile").click();
-	  });
+   // 1) Grab all <input> & <select> from BOTH toolbars
+   //    (Ensures we also get phase checkboxes, rotation sliders, etc.)
+   const inputs = document.querySelectorAll("#controlsLeft input, #controlsLeft select, #controlsRight input, #controlsRight select");
+   inputs.forEach(el => {
+     if (el.type === "checkbox") {
+       settings[el.id] = el.checked; // on/off
+     } else {
+       settings[el.id] = el.value;   // numeric or text
+     }
+   });
 
-	  // When a file is selected, read it and update the inputs.
-	  document.getElementById("loadSettingsFile").addEventListener("change", (event) => {
-	    const file = event.target.files[0];
-	    if (!file) return;
-	    const reader = new FileReader();
-	    reader.onload = (e) => {
-	      try {
-	        const settings = JSON.parse(e.target.result);
-	        setSettings(settings);
-	      } catch (err) {
-	        alert("Error parsing JSON: " + err);
-	      }
-	    };
-	    reader.readAsText(file);
-	  });
-  </script>	  
+   // 2) Include wave‐type and wireframe buttons
+   //    Each has a data attribute to save (data-wave or data-wireframe)
+   const waveX = document.getElementById("waveTypeX");
+   const waveY = document.getElementById("waveTypeY");
+   const waveZ = document.getElementById("waveTypeZ");
+   const waveW = document.getElementById("waveTypeW");
+   const wireB = document.getElementById("wireframeBtn");
+
+   if (waveX) settings.waveTypeXState = waveX.dataset.wave;
+   if (waveY) settings.waveTypeYState = waveY.dataset.wave;
+   if (waveZ) settings.waveTypeZState = waveZ.dataset.wave;
+   if (waveW) settings.waveTypeWState = waveW.dataset.wave;
+   if (wireB) settings.wireframeBtnState = wireB.dataset.wireframe;
+
+   return settings;
+ }
+
+ // -- (C) APPLY SETTINGS FROM JSON -- //
+ function setSettings(settings) {
+   // 1) Apply <input> & <select> in both toolbars
+   const inputs = document.querySelectorAll("#controlsLeft input, #controlsLeft select, #controlsRight input, #controlsRight select");
+   inputs.forEach(el => {
+     if (settings.hasOwnProperty(el.id)) {
+       if (el.type === "checkbox") {
+         el.checked = settings[el.id];
+       } else {
+         el.value = settings[el.id];
+       }
+       // Trigger "input" so existing logic refreshes
+       el.dispatchEvent(new Event("input"));
+     }
+   });
+
+   // 2) Apply wave‐type & wireframe states
+   const waveX = document.getElementById("waveTypeX");
+   const waveY = document.getElementById("waveTypeY");
+   const waveZ = document.getElementById("waveTypeZ");
+   const waveW = document.getElementById("waveTypeW");
+   const wireB = document.getElementById("wireframeBtn");
+
+   if (waveX && settings.waveTypeXState) {
+     updateWaveButtonUI(waveX, settings.waveTypeXState);
+   }
+   if (waveY && settings.waveTypeYState) {
+     updateWaveButtonUI(waveY, settings.waveTypeYState);
+   }
+   if (waveZ && settings.waveTypeZState) {
+     updateWaveButtonUI(waveZ, settings.waveTypeZState);
+   }
+   if (waveW && settings.waveTypeWState) {
+     updateWaveButtonUI(waveW, settings.waveTypeWState);
+   }
+   if (wireB && settings.wireframeBtnState) {
+     updateWireframeButtonUI(wireB, settings.wireframeBtnState);
+   }
+ }
+
+ // -- (D) HOOK UP SAVE / LOAD BUTTONS -- //
+ document.getElementById("saveSettings").addEventListener("click", () => {
+   // Gather current states
+   const settings = getSettings();
+   // Convert to a downloadable data URL
+   const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(settings, null, 2));
+   // Create a temporary link to download
+   const downloadAnchor = document.createElement("a");
+   downloadAnchor.setAttribute("href", dataStr);
+   downloadAnchor.setAttribute("download", "settings.json");
+   document.body.appendChild(downloadAnchor);
+   downloadAnchor.click();
+   downloadAnchor.remove();
+ });
+
+ // Clicking "Load Settings" -> triggers hidden file input
+ document.getElementById("loadSettings").addEventListener("click", () => {
+   document.getElementById("loadSettingsFile").click();
+ });
+
+ // On file chosen, read + parse JSON, then apply to UI
+ document.getElementById("loadSettingsFile").addEventListener("change", (event) => {
+   const file = event.target.files[0];
+   if (!file) return;
+   const reader = new FileReader();
+   reader.onload = (e) => {
+     try {
+       const settings = JSON.parse(e.target.result);
+       setSettings(settings);
+     } catch (err) {
+       alert("Error parsing JSON:\n" + err);
+     }
+   };
+   reader.readAsText(file);
+ });
+ </script>
+ 
+ 
 </body>
 </html>
