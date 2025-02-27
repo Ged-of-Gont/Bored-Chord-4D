@@ -13,6 +13,7 @@ the foundation of musical tuning systems from all around the world. Below are 4 
                                                                                                                                
                                                                                                                                    
                                                                                                                                    
+
                         2:1 (the Octave)                                           3:2 (the Perfect 5th)
                                                                                                               
                                                                                                                              
@@ -43,28 +44,30 @@ the foundation of musical tuning systems from all around the world. Below are 4 
                     4:3 (the Perfect 4th)                                         5:4 (the Major 3rd)                        
 
                                                                                                                              
-        @  %@    @@       @@      @@       @@    @   @                @  @@@@      %@@#@@         @@#@@       @@@  @         
-        @     @@              @@              @@     @                @  @  @@     @    @@       @    @@     @   @ @         
-        @   @    @         @     *@         @   @@   @                 @@     *@@*         *@ @          @@@      @@         
-        @  @       @    #@          @     @       @ @                  @@     @  @         @  @@         @ %      @@         
-         @@          @@@              @@@          @@                 @  @  :@     @     @       @     @     @   @ @         
-         @@          @ @              @ @          @@                 @   @@         @ @           @ @        @@@  @         
-        =  @       @    @@          @     @       @ @                 @   @@         @ @           @ @        =@@  @         
-        @   @    @        @@      @        @     @   @                @  @  .:     @     @       @     @     @   @ @         
-        @    @  @           @    #           @  @    @                 @@     @  @        #@   @        @   @    #@@         
-        @     @@              @@              @@     @                 @       @@           @@            @       @          
-        @    @ @:            @  @            @ @     @                 @@     @  @         @  @:         @ @      @@         
-        @   @    @         @     #@         @   @    @                   @   @           @      @      @     @   @ @         
-        @  @      @      @@        @       @     @                    @   @=@       @  @          @  @        @ @  @         
-         @@         @   @            @   @        @ @                 @   @@         @@            @@          @   @         
-         @@          @@                @           @                  @  @  @      @#   @        @    @      @# #  @         
-         @@         @  @@            @   @        @@@                  @@     @  @@       @@   @        @   @    @=@         
-        @  +@     @       @        @       @     @                     @       @@           @@            @@      @          
-        @    @  @           @*  @            @  @    @                 @@    @    @       @     @      @@   @*   @ @         
-        @    @ @@           @@  @=           @ @@    @                @   @@         @@@           @@@        @@@  @         
-         @@         +@@+             +@@@+         @+                                                                        
+         @  %@    @@       @@      @@       @@    @   @                @  @@@@      %@@#@@         @@#@@       @@@  @         
+          @     @@              @@              @@     @                @  @  @@     @    @@       @    @@     @   @ @         
+          @   @    @         @     *@         @   @@   @                 @@     *@@*         *@ @          @@@      @@         
+          @  @       @    #@          @     @       @ @                  @@     @  @         @  @@         @ %      @@         
+          @@          @@@              @@@          @@                 @  @  :@     @     @       @     @     @   @ @         
+          @@          @ @              @ @          @@                 @   @@         @ @           @ @        @@@  @         
+         =  @       @    @@          @     @       @ @                 @   @@         @ @           @ @        =@@  @         
+         @   @    @        @@      @        @     @   @                @  @  .:     @     @       @     @     @   @ @         
+         @    @  @           @    #           @  @    @                 @@     @  @        #@   @        @   @    #@@         
+         @     @@              @@              @@     @                 @       @@           @@            @       @          
+         @    @ @:            @  @            @ @     @                 @@     @  @         @  @:         @ @      @@         
+         @   @    @         @     #@         @   @    @                   @   @           @      @      @     @   @ @         
+         @  @      @      @@        @       @     @                    @   @=@       @  @          @  @        @ @  @         
+          @@         @   @            @   @        @ @                 @   @@         @@            @@          @   @         
+          @@          @@                @           @                  @  @  @      @#   @        @    @      @# #  @         
+          @@         @  @@            @   @        @@@                  @@     @  @@       @@   @        @   @    @=@         
+         @  +@     @       @        @       @     @                     @       @@           @@            @@      @          
+         @    @  @           @*  @            @  @    @                 @@    @    @       @     @      @@   @*   @ @         
+         @    @ @@           @@  @=           @ @@    @                @   @@         @@@           @@@        @@@  @         
+          @@         +@@+             +@@@+         @+                                                                        
                                                                                                                              
                                                                                                                                                                                                                                                                                                                        
+                                                                                                                                                     
+
                                                                                                                                                          
 So it stands to reason that since any chord (i.e. simultaneous sounding of multiple tones) can be expressed with ratios just like two notes can,
 more dimensions could be added to the Bowditch curve beyond X & Y. A triad could be represented as a 3D curve, and as I soon realized, it doesn't
@@ -74,6 +77,7 @@ but this limitation also opens a door for artistic interpretation.
 
 Below is a 1954 painting of the Crucifiction by Dalí titled Corpus Hypercubus. The artist depicts one of the many ways a hypercube can be flattened
 into 3 dimnesions which looks like some kind of 3D cubist cross. He called this blend of the scientific and the sacred, "Nuclear Mysticism."
+
 
                                                                                                                                                        
                                                                                                                                                    
@@ -146,3 +150,4 @@ into 3 dimnesions which looks like some kind of 3D cubist cross. He called this 
                                                                                                                                                    
                                                                                                                                                    
                                                                                                                              
+
