@@ -194,6 +194,10 @@
 	  height: 40px;
 	  margin: 10px 0;
 	}
+  .saveLoadBtnRow {
+  display: flex;
+  justify-content: space-between; /* Even horizontal spacing */
+}
 
 	/* Optionally add a hover or active style */
 	.saveLoadBtn:hover {
@@ -297,11 +301,15 @@
         </select>
       </label>
 	  
-	<div id="saveLoadSection" class="section">
-	  <button id="saveSettings" class="saveLoadBtn">Save Settings</button>
-	  <button id="loadSettings" class="saveLoadBtn">Load Settings</button>
-	  <input type="file" id="loadSettingsFile" accept="application/json" style="display:none" />
-	</div>
+      <div id="saveLoadSection" class="section">
+        <div class="saveLoadBtnRow">
+          <button id="saveSettings" class="saveLoadBtn">Save Settings</button>
+          <button id="loadSettings" class="saveLoadBtn">Load Settings</button>
+          <button id="initializeSettings" class="saveLoadBtn">Initialize</button>
+        </div>
+        <input type="file" id="loadSettingsFile" accept="application/json" style="display:none" />
+      </div>
+      
 	
     </div>
     
@@ -1216,7 +1224,23 @@
    reader.readAsText(file);
  });
  </script>
- 
+ <script>
+  /** 
+   * 1) Store the initial fresh-opened settings.
+   *    Call getSettings() AFTER your UI elements and 
+   *    wave/wireframe button states are all set up.
+   */
+  let defaultSettings = getSettings();
+  
+  /** 
+   * 2) Hook up the "Initialize" button to revert back to 
+   *    those stored defaults.
+   */
+  document.getElementById("initializeSettings").addEventListener("click", () => {
+    setSettings(defaultSettings);
+  });
+  </script>
+  
  
  
 </body>
