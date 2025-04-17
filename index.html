@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<!--
+****************************************************************************
+  ATTENTION: DO NOT CHANGE ANYTHING IN THIS FILE UNLESS I EXPLICITLY ASK!!
+  Only implement precisely what I request. Do not remove or alter other
+  sections without explicit direction. Unexpected changes break my workflow.
+****************************************************************************
+-->
+<html>
+<head>
+
+  <meta charset="UTF-8" />
+  <title>BORED CHORD 4D</title>
+  <link href="https://fonts.googleapis.com/css2?family=Martian+Mono:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" type="text/css" href="styles.css">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, shrink-to-fit=no">
+
+</head>
+
+<body>
+  <!-- TAPER CONFIGS -->
+  <script>
+    /********************************************************
+     * TAPER_CONFIGS & CUSTOM TAPER FUNCTION
+     ********************************************************/
+    const TAPER_CONFIGS = {
+      masterRateSlider:  { min:0.05,  max:0.5,   anchorPct:50, anchorVal:0.25 },
+      masterRateSlider2: { min:0.5,   max:2,     anchorPct:50, anchorVal:1 },
+      volumeSlider:      { min:1,     max:11,    anchorPct:50, anchorVal:5 },
+      dtSlider:          { min:1e-5,  max:0.5e-1,anchorPct:20, anchorVal:0.5e-3 },
+      numPointsSlider:   { min:100,   max:25000, anchorPct:20, anchorVal:800 },
+      saturationSlider:  { min:0,     max:100,   anchorPct:0,  anchorVal:0 }
+    };
+    function customTaper(t, config) {
+      let { min, max, anchorPct, anchorVal } = config;
+      let a = anchorPct / 100;
+      if (a <= 0 || a >= 1) {
+        return min + (max - min) * t;
+      }
+      let e = Math.log((anchorVal - min) / (max - min)) / Math.log(a);
+      return min + (max - min) * Math.pow(t, e);
+    }
+    function getTaperedValue(sliderId) {
+      const el = document.getElementById(sliderId);
+      if (!el) return 0;
+      let cfg = TAPER_CONFIGS[sliderId];
+      if (!cfg) {
+        return parseFloat(el.value);
+      }
+      let rawVal = parseFloat(el.value);
+      let t = rawVal / 100;
+      return customTaper(t, cfg);
+    }
+  </script>
+
+  <!-- LEFT TOOLBAR -->
+  <div id="controlsLeft">
+    <div class="section" id="freqSection">
+      <h4>CHORD RATIO</h4>
+      <label>
+        <span>Freq X:</span>
+        <input id="freqX" type="number" value="3" step="0.1">
+        <button id="waveTypeX" class="wave-type-btn" data-wave="sine">SINE</button>
+      </label>
+      <label>
+        <span>Freq Y:</span>
+        <input id="freqY" type="number" value="4" step="0.1">
+        <button id="waveTypeY" class="wave-type-btn" data-wave="sine">SINE</button>
+      </label>
+      <label>
+        <span>Freq Z:</span>
+        <input id="freqZ" type="number" value="5" step="0.1">
+        <button id="waveTypeZ" class="wave-type-btn" data-wave="sine">SINE</button>
+      </label>
+      <label>
+        <span>Freq W:</span>
+        <input id="freqW" type="number" value="6" step="0.1">
+        <button id="waveTypeW" class="wave-type-btn" data-wave="sine">SINE</button>
+      </label>
+      <label class="preset">
+        <span>Chord Presets:</span>
+        <select id="chordPreset">
+          <option value="">--Select Preset--</option>
+          <option value="maj7">Major 7</option>
+          <option value="min7">Minor 7</option>
+          <option value="dom7">Dominant 7</option>
+          <option value="dim7">Diminished 7</option>
+          <option value="maj6">Major 6</option>
+          <option value="min6">Minor 6</option>
+          <option value="hdim7">Half Diminished 7</option>
+          <option value="minmaj7">Minor Major 7</option>
+          <option value="minb6">Minor Flat 6</option>
+          <option value="augmaj7">Augmented Major 7</option>
+        </select>
+      </label>
+      
+      <div id="saveLoadSection" class="section">
+        <div class="saveLoadBtnRow">
+          <button id="saveSettings" class="saveLoadBtn">Save Settings</button>
+          <button id="loadSettings" class="saveLoadBtn">Load Settings</button>
+          <button id="initializeSettings" class="saveLoadBtn">Initialize</button>
+        </div>
+        <input type="file" id="loadSettingsFile" accept="application/json" style="display:none" />
+      </div>
+    </div>
+    
+    <div class="section" id="lfoSection">
+      <h4>LFOs</h4>
+      <label>
+        <span>LFO #1 (Hz): <span id="masterRateVal">.5</span></span>
+        <input id="masterRateSlider" type="range" min="0" max="100" step="0.5" value="1">
+        <input id="masterRateToggle1" type="checkbox" class="autoMaster" checked>
+      </label>
+      <label>
+        <span>LFO #2 (Hz): <span id="masterRateVal2">1</span></span>
+        <input id="masterRateSlider2" type="range" min="0" max="100" step="0.5" value="25">
+        <input id="masterRateToggle2" type="checkbox" class="autoMaster">
+      </label>
+    </div>
+
+    <div class="section" id="outputSection">
+      <h4>OUTPUT</h4>
+      <label>
+        <span>Volume: <span id="volVal">5</span></span>
+        <input id="volumeSlider" type="range" min="0" max="100" step="0.5" value="75">
+      </label>
+      <label>
+        <span>Δt per Point: <span id="dtVal"></span></span>
+        <input id="dtSlider" type="range" min="0" max="100" step="0.5" value="40">
+      </label>
+      <label>
+        <span># Points: <span id="numPointsVal"></span></span>
+        <input id="numPointsSlider" type="range" min="0" max="100" step="0.5" value="65">
+      </label>
+      <label>
+        <span>Curve Color: <span id="saturationVal"></span></span>
+        <input id="saturationSlider" type="range" min="0" max="100" step="0.5" value="0">
+      </label>
+      <label class="wireframe-row">
+        <span>4D Spacial Wireframe:</span>
+        <button id="wireframeBtn" class="wave-type-btn" data-wireframe="off">OFF</button>
+      </label>
+    </div>
+  </div>
+
+  <!-- RIGHT TOOLBAR -->
+  <div id="controlsRight">
+    <div class="section" id="phaseSection">
+      <h4>PHASE SHIFT</h4>
+      <div class="autoLabel">
+        <span class="rightAuto">
+          <input id="phaseXAuto" type="checkbox" class="autoMaster" data-target="phaseXRange" checked>
+        </span>
+        <span class="rightSlider">
+          <input id="phaseXRange" type="range" min="0" max="6.283185307179586" step="any" value="0">
+        </span>
+        <span class="rightLabel">X PHASE: <span id="phaseXVal">0</span>°</span>
+      </div>
+      <div class="autoLabel">
+        <span class="rightAuto">
+          <input id="phaseYAuto" type="checkbox" class="autoMaster" data-target="phaseYRange">
+        </span>
+        <span class="rightSlider">
+          <input id="phaseYRange" type="range" min="0" max="6.283185307179586" step="any" value="0">
+        </span>
+        <span class="rightLabel">Y PHASE: <span id="phaseYVal">0</span>°</span>
+      </div>
+      <div class="autoLabel">
+        <span class="rightAuto">
+          <input id="phaseZAuto" type="checkbox" class="autoMaster" data-target="phaseZRange">
+        </span>
+        <span class="rightSlider">
+          <input id="phaseZRange" type="range" min="0" max="6.283185307179586" step="any" value="0">
+        </span>
+        <span class="rightLabel">Z PHASE: <span id="phaseZVal">0</span>°</span>
+      </div>
+      <div class="autoLabel">
+        <span class="rightAuto">
+          <input id="phaseWAuto" type="checkbox" class="autoMaster" data-target="phaseWRange">
+        </span>
+        <span class="rightSlider">
+          <input id="phaseWRange" type="range" min="0" max="6.283185307179586" step="any" value="0">
+        </span>
+        <span class="rightLabel">W PHASE: <span id="phaseWVal">0</span>°</span>
+      </div>
+    </div>
+    
+    <div class="section" id="rot3DSection">
+      <h4>3D ROTATION</h4>
+      <div class="autoLabel">
+        <span class="rightAuto">
+          <input id="rotXAuto" type="checkbox" class="autoMaster" data-target="rotXRange">
+        </span>
+        <span class="rightSlider">
+          <input id="rotXRange" type="range" min="0" max="6.283185307179586" step="any" value="0">
+        </span>
+        <span class="rightLabel">X Axis: <span id="rotXVal">0</span>°</span>
+      </div>
+      <div class="autoLabel">
+        <span class="rightAuto">
+          <input id="rotYAuto" type="checkbox" class="autoMaster" data-target="rotYRange">
+        </span>
+        <span class="rightSlider">
+          <input id="rotYRange" type="range" min="0" max="6.283185307179586" step="any" value="0">
+        </span>
+        <span class="rightLabel">Y Axis: <span id="rotYVal">0</span>°</span>
+      </div>
+      <div class="autoLabel">
+        <span class="rightAuto">
+          <input id="rotZAuto" type="checkbox" class="autoMaster" data-target="rotZRange">
+        </span>
+        <span class="rightSlider">
+          <input id="rotZRange" type="range" min="0" max="6.283185307179586" step="any" value="0">
+        </span>
+        <span class="rightLabel">Z Axis: <span id="rotZVal">0</span>°</span>
+      </div>
+    </div>
+    
+    <div class="section" id="rot4DSection">
+      <h4>4D ROTATION</h4>
+      <div class="autoLabel">
+        <span class="rightAuto">
+          <input id="angle4DXYAuto" type="checkbox" class="autoMaster" data-target="angle4DXYRange">
+        </span>
+        <span class="rightSlider">
+          <input id="angle4DXYRange" type="range" min="0" max="6.283185307179586" step="any" value="0">
+        </span>
+        <span class="rightLabel">XY Plane: <span id="angle4DXYVal">0</span>°</span>
+      </div>
+      <div class="autoLabel">
+        <span class="rightAuto">
+          <input id="angle4DXZAuto" type="checkbox" class="autoMaster" data-target="angle4DXZRange">
+        </span>
+        <span class="rightSlider">
+          <input id="angle4DXZRange" type="range" min="0" max="6.283185307179586" step="any" value="0">
+        </span>
+        <span class="rightLabel">XZ Plane: <span id="angle4DXZVal">0</span>°</span>
+      </div>
+      <div class="autoLabel">
+        <span class="rightAuto">
+          <input id="angle4DXWAuto" type="checkbox" class="autoMaster" data-target="angle4DXWRange">
+        </span>
+        <span class="rightSlider">
+          <input id="angle4DXWRange" type="range" min="0" max="6.283185307179586" step="any" value="0">
+        </span>
+        <span class="rightLabel">XW Plane: <span id="angle4DXWVal">0</span>°</span>
+      </div>
+      <div class="autoLabel">
+        <span class="rightAuto">
+          <input id="angle4DYZAuto" type="checkbox" class="autoMaster" data-target="angle4DYZRange">
+        </span>
+        <span class="rightSlider">
+          <input id="angle4DYZRange" type="range" min="0" max="6.283185307179586" step="any" value="0">
+        </span>
+        <span class="rightLabel">YZ Plane: <span id="angle4DYZVal">0</span>°</span>
+      </div>
+      <div class="autoLabel">
+        <span class="rightAuto">
+          <input id="angle4DYWAuto" type="checkbox" class="autoMaster" data-target="angle4DYWRange">
+        </span>
+        <span class="rightSlider">
+          <input id="angle4DYWRange" type="range" min="0" max="6.283185307179586" step="any" value="0">
+        </span>
+        <span class="rightLabel">YW Plane: <span id="angle4DYWVal">0</span>°</span>
+      </div>
+      <div class="autoLabel">
+        <span class="rightAuto">
+          <input id="angle4DZWAuto" type="checkbox" class="autoMaster" data-target="angle4DZWRange">
+        </span>
+        <span class="rightSlider">
+          <input id="angle4DZWRange" type="range" min="0" max="6.283185307179586" step="any" value="0">
+        </span>
+        <span class="rightLabel">ZW Plane: <span id="angle4DZWVal">0</span>°</span>
+      </div>
+    </div>
+  </div>
+
+  <canvas id="myCanvas"></canvas>
+
+  <script src="BC.js"></script>
+</body>
+</html>
