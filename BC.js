@@ -399,10 +399,10 @@
       const speed = 2 * Math.PI * effFreq;
       updateAutomatedSliders(deltaTime, speed);
 
-      let fx = parseFloat(freqXInput.value) || 3;
-      let fy = parseFloat(freqYInput.value) || 4;
-      let fz = parseFloat(freqZInput.value) || 5;
-      let fw = parseFloat(freqWInput.value) || 6;
+      let fx = parseFloat(freqXInput.value) || DEFAULT_FREQS[0];
+      let fy = parseFloat(freqYInput.value) || DEFAULT_FREQS[1];
+      let fz = parseFloat(freqZInput.value) || DEFAULT_FREQS[2];
+      let fw = parseFloat(freqWInput.value) || DEFAULT_FREQS[3];
 
       // read 4D phases
       let phx = getContinuousAngle("phaseXRange");
@@ -526,20 +526,9 @@
      * CHORD PRESET DROPDOWN
      ********************************************************/
     document.getElementById('chordPreset').addEventListener('change', function() {
-      const presets = {
-        maj7:     [8, 10, 12, 15],
-        min7:     [10, 12, 15, 18],
-        dom7:     [20, 25, 30, 36],
-        dim7:     [125, 150, 180, 216],
-        maj6:     [16, 20, 24, 27],
-        min6:     [80, 96, 120, 135],
-        hdim7:    [25, 30, 36, 45],
-        minmaj7:  [40, 48, 60, 75],
-        minb6:    [10, 12, 15, 16],
-        augmaj7:  [16, 20, 25, 30]
-      };
+      
       const freqIDs = ['freqX','freqY','freqZ','freqW'];
-      const values = presets[this.value];
+      const values = CHORD_PRESETS[this.value];
       if (values) {
         freqIDs.forEach((id, i) => {
           document.getElementById(id).value = values[i];

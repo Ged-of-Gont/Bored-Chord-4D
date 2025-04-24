@@ -1,11 +1,4 @@
 <!DOCTYPE html>
-<!--
-****************************************************************************
-  ATTENTION: DO NOT CHANGE ANYTHING IN THIS FILE UNLESS I EXPLICITLY ASK!!
-  Only implement precisely what I request. Do not remove or alter other
-  sections without explicit direction. Unexpected changes break my workflow.
-****************************************************************************
--->
 <html>
 <head>
 
@@ -18,41 +11,7 @@
 </head>
 
 <body>
-  <!-- TAPER CONFIGS -->
-  <script>
-    /********************************************************
-     * TAPER_CONFIGS & CUSTOM TAPER FUNCTION
-     ********************************************************/
-    const TAPER_CONFIGS = {
-      masterRateSlider:  { min:0.05,  max:0.5,   anchorPct:50, anchorVal:0.25 },
-      masterRateSlider2: { min:0.5,   max:2,     anchorPct:50, anchorVal:1 },
-      volumeSlider:      { min:1,     max:11,    anchorPct:50, anchorVal:5 },
-      dtSlider:          { min:1e-5,  max:0.5e-1,anchorPct:20, anchorVal:0.5e-3 },
-      numPointsSlider:   { min:100,   max:25000, anchorPct:20, anchorVal:800 },
-      saturationSlider:  { min:0,     max:100,   anchorPct:0,  anchorVal:0 }
-    };
-    function customTaper(t, config) {
-      let { min, max, anchorPct, anchorVal } = config;
-      let a = anchorPct / 100;
-      if (a <= 0 || a >= 1) {
-        return min + (max - min) * t;
-      }
-      let e = Math.log((anchorVal - min) / (max - min)) / Math.log(a);
-      return min + (max - min) * Math.pow(t, e);
-    }
-    function getTaperedValue(sliderId) {
-      const el = document.getElementById(sliderId);
-      if (!el) return 0;
-      let cfg = TAPER_CONFIGS[sliderId];
-      if (!cfg) {
-        return parseFloat(el.value);
-      }
-      let rawVal = parseFloat(el.value);
-      let t = rawVal / 100;
-      return customTaper(t, cfg);
-    }
-  </script>
-
+ 
   <!-- LEFT TOOLBAR -->
   <div id="controlsLeft">
     <div class="section" id="freqSection">
@@ -276,7 +235,7 @@
   </div>
 
   <canvas id="myCanvas"></canvas>
-
+  <script src="config.js"></script>
   <script src="BC.js"></script>
 </body>
 </html>
