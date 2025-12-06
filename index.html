@@ -1,17 +1,20 @@
 <!DOCTYPE html>
 <html>
+
 <head>
 
   <meta charset="UTF-8" />
   <title>BORED CHORD 4D</title>
-  <link href="https://fonts.googleapis.com/css2?family=Martian+Mono:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Martian+Mono:wght@100;200;300;400;500;600;700;800;900&display=swap"
+    rel="stylesheet">
   <link rel="stylesheet" type="text/css" href="styles.css">
   <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, shrink-to-fit=no">
 
 </head>
 
 <body>
- 
+
   <!-- LEFT TOOLBAR -->
   <div id="controlsLeft">
     <div class="section" id="freqSection">
@@ -52,7 +55,7 @@
           <option value="augmaj7">Augmented Major 7</option>
         </select>
       </label>
-      
+
       <div id="saveLoadSection" class="section">
         <div class="saveLoadBtnRow">
           <button id="saveSettings" class="saveLoadBtn">Save Settings</button>
@@ -62,7 +65,7 @@
         <input type="file" id="loadSettingsFile" accept="application/json" style="display:none" />
       </div>
     </div>
-    
+
     <div class="section" id="lfoSection">
       <h4>LFOs</h4>
       <label>
@@ -143,7 +146,7 @@
         <span class="rightLabel">W PHASE: <span id="phaseWVal">0</span>°</span>
       </div>
     </div>
-    
+
     <div class="section" id="rot3DSection">
       <h4>3D ROTATION</h4>
       <div class="autoLabel">
@@ -174,7 +177,7 @@
         <span class="rightLabel">Z Axis: <span id="rotZVal">0</span>°</span>
       </div>
     </div>
-    
+
     <div class="section" id="rot4DSection">
       <h4>4D ROTATION</h4>
       <div class="autoLabel">
@@ -238,4 +241,5 @@
   <script src="config.js"></script>
   <script src="BC.js"></script>
 </body>
+
 </html>

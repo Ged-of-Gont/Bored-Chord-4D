@@ -3,9 +3,9 @@
     ========================================================*/
     :root {
         /* Color Palette */
-        --background: #141214;      /* off-black */
+        --background: #141213;      /* off-black */
         --primary: #FBF6E4;         /* off-white */
-        --primary-accent: #E2DDCD;  /* darker off-white */
+        --primary-accent: #c9c3ad;  /* darker off-white */
         --secondary: #DC143C;       /* red */
         --secondary-accent: #00FF7E;/* spring green */
         --black-accent: #393737;    /* dark grey */
