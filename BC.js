@@ -219,6 +219,134 @@
     }
 
     /********************************************************
+     * WEBGL POINT RENDERING SETUP
+     ********************************************************/
+    const glCanvas = document.getElementById("glCanvas");
+    const wireCanvas = document.getElementById("wireCanvas");
+    const gl = glCanvas.getContext("webgl", { alpha: true, antialias: true });
+    if (!gl) {
+      alert("WebGL is required to render the curve. Please use a compatible browser.");
+      throw new Error("WebGL not supported");
+    }
+    const wireCtx = wireCanvas.getContext("2d");
+
+    const vertexShaderSource = `
+      attribute vec2 a_position;
+      attribute vec4 a_color;
+      varying vec4 v_color;
+      uniform float u_pointSize;
+      void main() {
+        gl_Position = vec4(a_position, 0.0, 1.0);
+        gl_PointSize = u_pointSize;
+        v_color = a_color;
+      }
+    `;
+    const fragmentShaderSource = `
+      precision mediump float;
+      varying vec4 v_color;
+      void main() {
+        vec2 coord = gl_PointCoord - vec2(0.5);
+        if (dot(coord, coord) > 0.25) {
+          discard;
+        }
+        gl_FragColor = v_color;
+      }
+    `;
+
+    function createShader(glCtx, type, source) {
+      const shader = glCtx.createShader(type);
+      glCtx.shaderSource(shader, source);
+      glCtx.compileShader(shader);
+      if (!glCtx.getShaderParameter(shader, glCtx.COMPILE_STATUS)) {
+        console.error(glCtx.getShaderInfoLog(shader));
+        glCtx.deleteShader(shader);
+        throw new Error("Shader compilation failed");
+      }
+      return shader;
+    }
+    function createProgram(glCtx, vsSource, fsSource) {
+      const program = glCtx.createProgram();
+      const vs = createShader(glCtx, glCtx.VERTEX_SHADER, vsSource);
+      const fs = createShader(glCtx, glCtx.FRAGMENT_SHADER, fsSource);
+      glCtx.attachShader(program, vs);
+      glCtx.attachShader(program, fs);
+      glCtx.linkProgram(program);
+      if (!glCtx.getProgramParameter(program, glCtx.LINK_STATUS)) {
+        console.error(glCtx.getProgramInfoLog(program));
+        throw new Error("Program linking failed");
+      }
+      return program;
+    }
+
+    const pointProgram = createProgram(gl, vertexShaderSource, fragmentShaderSource);
+    const positionLoc = gl.getAttribLocation(pointProgram, "a_position");
+    const colorLoc = gl.getAttribLocation(pointProgram, "a_color");
+    const pointSizeUniform = gl.getUniformLocation(pointProgram, "u_pointSize");
+    const positionBuffer = gl.createBuffer();
+    const colorBuffer = gl.createBuffer();
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
+    let pointPositions = new Float32Array(0);
+    let pointColors = new Float32Array(0);
+
+    function ensurePointCapacity(count) {
+      const neededPos = count * 2;
+      if (pointPositions.length < neededPos) {
+        pointPositions = new Float32Array(neededPos);
+      }
+      const neededColors = count * 4;
+      if (pointColors.length < neededColors) {
+        pointColors = new Float32Array(neededColors);
+      }
+    }
+
+    function renderPoints(count) {
+      gl.viewport(0, 0, glCanvas.width, glCanvas.height);
+      gl.clearColor(0, 0, 0, 0);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      if (count === 0) return;
+
+      gl.useProgram(pointProgram);
+      gl.uniform1f(pointSizeUniform, 4.0);
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+      gl.bufferData(gl.ARRAY_BUFFER, pointPositions.subarray(0, count * 2), gl.DYNAMIC_DRAW);
+      gl.enableVertexAttribArray(positionLoc);
+      gl.vertexAttribPointer(positionLoc, 2, gl.FLOAT, false, 0, 0);
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+      gl.bufferData(gl.ARRAY_BUFFER, pointColors.subarray(0, count * 4), gl.DYNAMIC_DRAW);
+      gl.enableVertexAttribArray(colorLoc);
+      gl.vertexAttribPointer(colorLoc, 4, gl.FLOAT, false, 0, 0);
+
+      gl.drawArrays(gl.POINTS, 0, count);
+    }
+
+    const OFF_WHITE = { r: 251 / 255, g: 246 / 255, b: 228 / 255 };
+    function hslToRgb(h, s, l) {
+      let r, g, b;
+      if (s === 0) {
+        r = g = b = l;
+      } else {
+        const hue2rgb = (p, q, t) => {
+          if (t < 0) t += 1;
+          if (t > 1) t -= 1;
+          if (t < 1 / 6) return p + (q - p) * 6 * t;
+          if (t < 1 / 2) return q;
+          if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+          return p;
+        };
+        const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+        const p = 2 * l - q;
+        r = hue2rgb(p, q, h + 1 / 3);
+        g = hue2rgb(p, q, h);
+        b = hue2rgb(p, q, h - 1 / 3);
+      }
+      return { r, g, b };
+    }
+
+    /********************************************************
      * AUTOMATED SLIDER UPDATES
      ********************************************************/
     function updateAutomatedSliders(deltaTime, speed) {
@@ -259,11 +387,14 @@
     /********************************************************
      * CANVAS & DRAWING
      ********************************************************/
-    const canvas = document.getElementById("myCanvas");
-    const ctx = canvas.getContext("2d");
     function resizeCanvas() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      glCanvas.width = width;
+      glCanvas.height = height;
+      wireCanvas.width = width;
+      wireCanvas.height = height;
+      gl.viewport(0, 0, width, height);
     }
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
@@ -303,10 +434,10 @@
 
     // Draw wireframe
     function drawWireframe(ax, ay, az, aXY, aXZ, aXW, aYZ, aYW, aZW, camZ) {
-      ctx.save();
-      ctx.lineWidth = 1;
-      ctx.setLineDash([4,4]);
-      ctx.strokeStyle = "rgba(251,246,228,0.5)";
+      wireCtx.save();
+      wireCtx.lineWidth = 1;
+      wireCtx.setLineDash([4,4]);
+      wireCtx.strokeStyle = "rgba(251,246,228,0.5)";
       let hProj = [];
       for (let v of hypercubeVertices) {
         let r = rotateXY(v, aXY);
@@ -325,24 +456,24 @@
 
         let denom = camZ - zr;
         if (Math.abs(denom) < 1e-5) denom = 1e-5;
-        let scale = Math.min(canvas.width, canvas.height) * 0.45;
-        let px = canvas.width * 0.5 + (xr / denom) * scale;
-        let py = canvas.height * 0.5 - (yr / denom) * scale;
+        let scale = Math.min(wireCanvas.width, wireCanvas.height) * 0.45;
+        let px = wireCanvas.width * 0.5 + (xr / denom) * scale;
+        let py = wireCanvas.height * 0.5 - (yr / denom) * scale;
         hProj.push({ x: px, y: py });
       }
       for (let [start, end] of hypercubeEdges) {
         let A = hProj[start], B = hProj[end];
-        ctx.beginPath();
-        ctx.moveTo(A.x, A.y);
-        ctx.lineTo(B.x, B.y);
-        ctx.stroke();
+        wireCtx.beginPath();
+        wireCtx.moveTo(A.x, A.y);
+        wireCtx.lineTo(B.x, B.y);
+        wireCtx.stroke();
       }
-      ctx.restore();
+      wireCtx.restore();
 
-      ctx.save();
-      ctx.lineWidth = 2;
-      ctx.setLineDash([]);
-      ctx.strokeStyle = "rgba(251,246,228,0.5)";
+      wireCtx.save();
+      wireCtx.lineWidth = 2;
+      wireCtx.setLineDash([]);
+      wireCtx.strokeStyle = "rgba(251,246,228,0.5)";
       let cProj = [];
       for (let v of cube3DVertices) {
         let r = rotateXY(v, aXY);
@@ -361,19 +492,19 @@
 
         let denom = camZ - zr;
         if (Math.abs(denom) < 1e-5) denom = 1e-5;
-        let scale = Math.min(canvas.width, canvas.height) * 0.45;
-        let px = canvas.width * 0.5 + (xr / denom) * scale;
-        let py = canvas.height * 0.5 - (yr / denom) * scale;
+        let scale = Math.min(wireCanvas.width, wireCanvas.height) * 0.45;
+        let px = wireCanvas.width * 0.5 + (xr / denom) * scale;
+        let py = wireCanvas.height * 0.5 - (yr / denom) * scale;
         cProj.push({ x: px, y: py });
       }
       for (let [start, end] of cube3DEdges) {
         let A = cProj[start], B = cProj[end];
-        ctx.beginPath();
-        ctx.moveTo(A.x, A.y);
-        ctx.lineTo(B.x, B.y);
-        ctx.stroke();
+        wireCtx.beginPath();
+        wireCtx.moveTo(A.x, A.y);
+        wireCtx.lineTo(B.x, B.y);
+        wireCtx.stroke();
       }
-      ctx.restore();
+      wireCtx.restore();
     }
 
     /********************************************************
@@ -383,8 +514,6 @@
     function drawFrame(now) {
       let deltaTime = (now - lastFrameTime) * 0.001;
       lastFrameTime = now;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
       // LFO freq
       const lfo1 = masterRateToggle1.checked, lfo2 = masterRateToggle2.checked;
       let f1 = getTaperedValue("masterRateSlider");
@@ -437,6 +566,16 @@
 
       let alphaFrac = getTaperedValue("saturationSlider") / 100;
 
+      ensurePointCapacity(n);
+      let posOffset = 0;
+      let colorOffset = 0;
+      let pointCount = 0;
+      const width = glCanvas.width;
+      const height = glCanvas.height;
+      const scale = Math.min(width, height) * 0.45;
+      const halfWidth = width * 0.5;
+      const halfHeight = height * 0.5;
+
       // MAIN wave draw
       for (let i = 0; i < n; i++) {
         let t = timeArray[i];
@@ -471,30 +610,32 @@
 
         let denom = camZ - zr;
         if (Math.abs(denom) < 1e-5) continue;
-        let scale = Math.min(canvas.width, canvas.height) * 0.45;
-        let px = canvas.width * 0.5 + (xr / denom) * scale;
-        let py = canvas.height * 0.5 - (yr / denom) * scale;
+        let px = halfWidth + (xr / denom) * scale;
+        let py = halfHeight - (yr / denom) * scale;
 
-        // constant radius
-        let radius = 2;
-        let whiteAlpha = 1 - alphaFrac;
+        let clipX = (px / width) * 2 - 1;
+        let clipY = (py / height) * -2 + 1;
+        pointPositions[posOffset++] = clipX;
+        pointPositions[posOffset++] = clipY;
+
         let hue = (zr + 1) * 180;
+        let normalizedHue = (((hue % 360) + 360) % 360) / 360;
+        let rgb = hslToRgb(normalizedHue, 1, 0.5);
+        let mix = alphaFrac;
+        let rCol = OFF_WHITE.r * (1 - mix) + rgb.r * mix;
+        let gCol = OFF_WHITE.g * (1 - mix) + rgb.g * mix;
+        let bCol = OFF_WHITE.b * (1 - mix) + rgb.b * mix;
+        pointColors[colorOffset++] = rCol;
+        pointColors[colorOffset++] = gCol;
+        pointColors[colorOffset++] = bCol;
+        pointColors[colorOffset++] = 1.0;
 
-        // partial off-white fill
-        if (whiteAlpha > 0) {
-          ctx.fillStyle = `rgba(251,246,228,${whiteAlpha})`;
-          ctx.beginPath();
-          ctx.arc(px, py, radius, 0, 2 * Math.PI);
-          ctx.fill();
-        }
-        // hue-based fill
-        ctx.fillStyle = `hsla(${hue},100%,50%,${alphaFrac})`;
-        ctx.beginPath();
-        ctx.arc(px, py, radius, 0, 2 * Math.PI);
-        ctx.fill();
+        pointCount++;
       }
 
-      // If wireframe ON
+      renderPoints(pointCount);
+
+      wireCtx.clearRect(0, 0, wireCanvas.width, wireCanvas.height);
       if (wireframeBtn.dataset.wireframe === 'on') {
         drawWireframe(ax, ay, az, aXY, aXZ, aXW, aYZ, aYW, aZW, camZ);
       }

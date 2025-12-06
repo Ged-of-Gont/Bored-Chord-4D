@@ -5,7 +5,7 @@ const TAPER_CONFIGS = {
     masterRateSlider2: { min: 0.5,   max: 2,     anchorPct: 50, anchorVal: 1 },
     volumeSlider:      { min: 1,     max: 11,    anchorPct: 50, anchorVal: 5 },
     dtSlider:          { min: 1e-5,  max: 0.5e-1, anchorPct: 20, anchorVal: 0.5e-3 },
-    numPointsSlider:   { min: 100,   max: 25000, anchorPct: 20, anchorVal: 800 },
+    numPointsSlider:   { min: 100,   max: 250000, anchorPct: 20, anchorVal: 800 },
     saturationSlider:  { min: 0,     max: 100,   anchorPct: 0,  anchorVal: 0 }
   };
   
