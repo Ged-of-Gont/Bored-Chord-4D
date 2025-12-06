@@ -150,25 +150,19 @@
     });
     saturationSlider.dispatchEvent(new Event('input'));
 
-    let timeArray = [];
+    let timeArray = new Float32Array(0);
+    let timeBufferDirty = true;
     function buildTimeArray() {
-      timeArray = [];
       let nPoints = Math.round(getTaperedValue("numPointsSlider"));
       let dt = getTaperedValue("dtSlider");
+      let arr = new Float32Array(nPoints);
       for (let i = 0; i < nPoints; i++) {
-        timeArray.push(i * dt);
+        arr[i] = i * dt;
       }
+      timeArray = arr;
+      timeBufferDirty = true;
     }
     buildTimeArray();
-
-    function triangleWave(x) {
-      return (2 / Math.PI) * Math.asin(Math.sin(x));
-    }
-    function getWaveValue(wave, angle) {
-      if (wave === 'off')  return 0;
-      if (wave === 'triangle') return triangleWave(angle);
-      return Math.sin(angle);
-    }
 
     /********************************************************
      * 3D ROTATIONS & 4D ROTATIONS
@@ -231,14 +225,153 @@
     const wireCtx = wireCanvas.getContext("2d");
 
     const vertexShaderSource = `
-      attribute vec2 a_position;
-      attribute vec4 a_color;
+      precision mediump float;
+      attribute float a_time;
       varying vec4 v_color;
+
+      uniform vec4 u_freqs;
+      uniform vec4 u_phases;
+      uniform ivec4 u_waveTypes;
+      uniform vec3 u_rot3D;
+      uniform vec3 u_rot4D_1;
+      uniform vec3 u_rot4D_2;
+      uniform float u_camZ;
+      uniform float u_scaleX;
+      uniform float u_scaleY;
+      uniform float u_alphaFrac;
       uniform float u_pointSize;
+
+      const float PI = 3.1415926535897932384626433832795;
+      const vec3 OFF_WHITE = vec3(0.9843137, 0.9647058, 0.8941176);
+
+      float triangleWave(float x) {
+        return (2.0 / PI) * asin(sin(x));
+      }
+
+      float getWaveValue(int waveType, float angle) {
+        if (waveType == 0) {
+          return 0.0;
+        } else if (waveType == 2) {
+          return triangleWave(angle);
+        }
+        return sin(angle);
+      }
+
+      vec4 rotateXY(vec4 v, float t) {
+        float c = cos(t), s = sin(t);
+        return vec4(v.x * c - v.y * s, v.x * s + v.y * c, v.z, v.w);
+      }
+      vec4 rotateXZ(vec4 v, float t) {
+        float c = cos(t), s = sin(t);
+        return vec4(v.x * c - v.z * s, v.y, v.x * s + v.z * c, v.w);
+      }
+      vec4 rotateXW(vec4 v, float t) {
+        float c = cos(t), s = sin(t);
+        return vec4(v.x * c - v.w * s, v.y, v.z, v.x * s + v.w * c);
+      }
+      vec4 rotateYZ(vec4 v, float t) {
+        float c = cos(t), s = sin(t);
+        return vec4(v.x, v.y * c - v.z * s, v.y * s + v.z * c, v.w);
+      }
+      vec4 rotateYW(vec4 v, float t) {
+        float c = cos(t), s = sin(t);
+        return vec4(v.x, v.y * c - v.w * s, v.z, v.y * s + v.w * c);
+      }
+      vec4 rotateZW(vec4 v, float t) {
+        float c = cos(t), s = sin(t);
+        return vec4(v.x, v.y, v.z * c - v.w * s, v.z * s + v.w * c);
+      }
+
+      vec3 rotateX3(vec3 v, float ax) {
+        float c = cos(ax), s = sin(ax);
+        return vec3(v.x, v.y * c - v.z * s, v.y * s + v.z * c);
+      }
+      vec3 rotateY3(vec3 v, float ay) {
+        float c = cos(ay), s = sin(ay);
+        return vec3(v.z * s + v.x * c, v.y, v.z * c - v.x * s);
+      }
+      vec3 rotateZ3(vec3 v, float az) {
+        float c = cos(az), s = sin(az);
+        return vec3(v.x * c - v.y * s, v.x * s + v.y * c, v.z);
+      }
+      vec3 rotateXYZ(vec3 v, vec3 ang) {
+        vec3 r = rotateX3(v, ang.x);
+        r = rotateY3(r, ang.y);
+        r = rotateZ3(r, ang.z);
+        return r;
+      }
+
+      float hue2rgb(float p, float q, float t) {
+        if (t < 0.0) t += 1.0;
+        if (t > 1.0) t -= 1.0;
+        if (t < 1.0 / 6.0) return p + (q - p) * 6.0 * t;
+        if (t < 1.0 / 2.0) return q;
+        if (t < 2.0 / 3.0) return p + (q - p) * (2.0 / 3.0 - t) * 6.0;
+        return p;
+      }
+
+      vec3 hsl2rgb(float h, float s, float l) {
+        if (s == 0.0) {
+          return vec3(l, l, l);
+        }
+        float q = l < 0.5 ? l * (1.0 + s) : l + s - l * s;
+        float p = 2.0 * l - q;
+        float r = hue2rgb(p, q, h + 1.0 / 3.0);
+        float g = hue2rgb(p, q, h);
+        float b = hue2rgb(p, q, h - 1.0 / 3.0);
+        return vec3(r, g, b);
+      }
+
       void main() {
-        gl_Position = vec4(a_position, 0.0, 1.0);
+        float angleX = 2.0 * PI * u_freqs.x * a_time + u_phases.x;
+        float angleY = 2.0 * PI * u_freqs.y * a_time + u_phases.y;
+        float angleZ = 2.0 * PI * u_freqs.z * a_time + u_phases.z;
+        float angleW = 2.0 * PI * u_freqs.w * a_time + u_phases.w;
+
+        float x4 = getWaveValue(u_waveTypes.x, angleX);
+        float y4 = getWaveValue(u_waveTypes.y, angleY);
+        float z4 = getWaveValue(u_waveTypes.z, angleZ);
+        float w4 = getWaveValue(u_waveTypes.w, angleW);
+
+        vec4 v4 = vec4(x4, y4, z4, w4);
+        v4 = rotateXY(v4, u_rot4D_1.x);
+        v4 = rotateXZ(v4, u_rot4D_1.y);
+        v4 = rotateXW(v4, u_rot4D_1.z);
+        v4 = rotateYZ(v4, u_rot4D_2.x);
+        v4 = rotateYW(v4, u_rot4D_2.y);
+        v4 = rotateZW(v4, u_rot4D_2.z);
+
+        bool zeroXW = abs(u_rot4D_1.z) < 1e-6;
+        bool zeroYW = abs(u_rot4D_2.y) < 1e-6;
+        bool zeroZW = abs(u_rot4D_2.z) < 1e-6;
+        float effW = (zeroXW && zeroYW && zeroZW) ? 0.0 : v4.w;
+        float d4 = 5.0;
+        float factor4 = d4 / (d4 - effW);
+        vec3 v3 = v4.xyz * factor4;
+
+        vec3 rotated3 = rotateXYZ(v3, u_rot3D);
+        float denom = u_camZ - rotated3.z;
+        bool skipPoint = abs(denom) < 1e-5;
+        denom = skipPoint ? (denom >= 0.0 ? 1e-5 : -1e-5) : denom;
+        float clipX = (rotated3.x / denom) * u_scaleX;
+        float clipY = (rotated3.y / denom) * u_scaleY;
+
+        if (skipPoint) {
+          gl_Position = vec4(2.0, 2.0, 0.0, 1.0);
+          gl_PointSize = 0.0;
+          v_color = vec4(0.0);
+          return;
+        }
+
+        float hueDegrees = (rotated3.z + 1.0) * 180.0;
+        float hue = fract(hueDegrees / 360.0);
+        vec3 rgb = hsl2rgb(hue, 1.0, 0.5);
+        float mixAmt = clamp(u_alphaFrac, 0.0, 1.0);
+        vec3 finalColor = mix(OFF_WHITE, rgb, mixAmt);
+
+        gl_Position = vec4(clipX, clipY, 0.0, 1.0);
         gl_PointSize = u_pointSize;
-        v_color = a_color;
+        v_color = vec4(finalColor, 1.0);
       }
     `;
     const fragmentShaderSource = `
@@ -279,71 +412,57 @@
     }
 
     const pointProgram = createProgram(gl, vertexShaderSource, fragmentShaderSource);
-    const positionLoc = gl.getAttribLocation(pointProgram, "a_position");
-    const colorLoc = gl.getAttribLocation(pointProgram, "a_color");
+    const timeLoc = gl.getAttribLocation(pointProgram, "a_time");
     const pointSizeUniform = gl.getUniformLocation(pointProgram, "u_pointSize");
-    const positionBuffer = gl.createBuffer();
-    const colorBuffer = gl.createBuffer();
+    const freqsLoc = gl.getUniformLocation(pointProgram, "u_freqs");
+    const phasesLoc = gl.getUniformLocation(pointProgram, "u_phases");
+    const waveTypesLoc = gl.getUniformLocation(pointProgram, "u_waveTypes");
+    const rot3DLoc = gl.getUniformLocation(pointProgram, "u_rot3D");
+    const rot4D1Loc = gl.getUniformLocation(pointProgram, "u_rot4D_1");
+    const rot4D2Loc = gl.getUniformLocation(pointProgram, "u_rot4D_2");
+    const camZLoc = gl.getUniformLocation(pointProgram, "u_camZ");
+    const scaleXLoc = gl.getUniformLocation(pointProgram, "u_scaleX");
+    const scaleYLoc = gl.getUniformLocation(pointProgram, "u_scaleY");
+    const alphaLoc = gl.getUniformLocation(pointProgram, "u_alphaFrac");
+    const timeBuffer = gl.createBuffer();
+    const waveTypeVec = new Int32Array(4);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
-    let pointPositions = new Float32Array(0);
-    let pointColors = new Float32Array(0);
-
-    function ensurePointCapacity(count) {
-      const neededPos = count * 2;
-      if (pointPositions.length < neededPos) {
-        pointPositions = new Float32Array(neededPos);
-      }
-      const neededColors = count * 4;
-      if (pointColors.length < neededColors) {
-        pointColors = new Float32Array(neededColors);
-      }
+    function uploadTimeBuffer() {
+      gl.bindBuffer(gl.ARRAY_BUFFER, timeBuffer);
+      gl.bufferData(gl.ARRAY_BUFFER, timeArray, gl.DYNAMIC_DRAW);
+      timeBufferDirty = false;
     }
 
-    function renderPoints(count) {
+    function renderPoints(count, uniforms) {
       gl.viewport(0, 0, glCanvas.width, glCanvas.height);
       gl.clearColor(0, 0, 0, 0);
       gl.clear(gl.COLOR_BUFFER_BIT);
       if (count === 0) return;
 
+      if (timeBufferDirty) {
+        uploadTimeBuffer();
+      }
+
       gl.useProgram(pointProgram);
-      gl.uniform1f(pointSizeUniform, 4.0);
+      gl.uniform1f(pointSizeUniform, uniforms.pointSize);
+      gl.uniform4f(freqsLoc, uniforms.freqs[0], uniforms.freqs[1], uniforms.freqs[2], uniforms.freqs[3]);
+      gl.uniform4f(phasesLoc, uniforms.phases[0], uniforms.phases[1], uniforms.phases[2], uniforms.phases[3]);
+      gl.uniform4iv(waveTypesLoc, uniforms.waveTypes);
+      gl.uniform3f(rot3DLoc, uniforms.rot3D[0], uniforms.rot3D[1], uniforms.rot3D[2]);
+      gl.uniform3f(rot4D1Loc, uniforms.rot4D1[0], uniforms.rot4D1[1], uniforms.rot4D1[2]);
+      gl.uniform3f(rot4D2Loc, uniforms.rot4D2[0], uniforms.rot4D2[1], uniforms.rot4D2[2]);
+      gl.uniform1f(camZLoc, uniforms.camZ);
+      gl.uniform1f(scaleXLoc, uniforms.scale[0]);
+      gl.uniform1f(scaleYLoc, uniforms.scale[1]);
+      gl.uniform1f(alphaLoc, uniforms.alphaFrac);
 
-      gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-      gl.bufferData(gl.ARRAY_BUFFER, pointPositions.subarray(0, count * 2), gl.DYNAMIC_DRAW);
-      gl.enableVertexAttribArray(positionLoc);
-      gl.vertexAttribPointer(positionLoc, 2, gl.FLOAT, false, 0, 0);
-
-      gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
-      gl.bufferData(gl.ARRAY_BUFFER, pointColors.subarray(0, count * 4), gl.DYNAMIC_DRAW);
-      gl.enableVertexAttribArray(colorLoc);
-      gl.vertexAttribPointer(colorLoc, 4, gl.FLOAT, false, 0, 0);
+      gl.bindBuffer(gl.ARRAY_BUFFER, timeBuffer);
+      gl.enableVertexAttribArray(timeLoc);
+      gl.vertexAttribPointer(timeLoc, 1, gl.FLOAT, false, 0, 0);
 
       gl.drawArrays(gl.POINTS, 0, count);
-    }
-
-    const OFF_WHITE = { r: 251 / 255, g: 246 / 255, b: 228 / 255 };
-    function hslToRgb(h, s, l) {
-      let r, g, b;
-      if (s === 0) {
-        r = g = b = l;
-      } else {
-        const hue2rgb = (p, q, t) => {
-          if (t < 0) t += 1;
-          if (t > 1) t -= 1;
-          if (t < 1 / 6) return p + (q - p) * 6 * t;
-          if (t < 1 / 2) return q;
-          if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
-          return p;
-        };
-        const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-        const p = 2 * l - q;
-        r = hue2rgb(p, q, h + 1 / 3);
-        g = hue2rgb(p, q, h);
-        b = hue2rgb(p, q, h - 1 / 3);
-      }
-      return { r, g, b };
     }
 
     /********************************************************
@@ -549,8 +668,6 @@
       let vol = getTaperedValue("volumeSlider") || 5;
       let camZ = 5 - 0.4 * (vol - 1);
 
-      let n = timeArray.length;
-
       let waveX = document.getElementById("waveTypeX").dataset.wave;
       let waveY = document.getElementById("waveTypeY").dataset.wave;
       let waveZ = document.getElementById("waveTypeZ").dataset.wave;
@@ -566,74 +683,33 @@
 
       let alphaFrac = getTaperedValue("saturationSlider") / 100;
 
-      ensurePointCapacity(n);
-      let posOffset = 0;
-      let colorOffset = 0;
-      let pointCount = 0;
-      const width = glCanvas.width;
-      const height = glCanvas.height;
-      const scale = Math.min(width, height) * 0.45;
-      const halfWidth = width * 0.5;
-      const halfHeight = height * 0.5;
+      const pointCount = timeArray.length;
+      const width = glCanvas.width || 1;
+      const height = glCanvas.height || 1;
+      const minDim = Math.min(width, height);
+      const scalePx = minDim * 0.45;
+      const scaleX = width > 0 ? scalePx / (width * 0.5) : 1;
+      const scaleY = height > 0 ? scalePx / (height * 0.5) : 1;
+      const waveTypeMap = { off: 0, sine: 1, triangle: 2 };
+      waveTypeVec[0] = waveTypeMap[waveX] ?? 1;
+      waveTypeVec[1] = waveTypeMap[waveY] ?? 1;
+      waveTypeVec[2] = waveTypeMap[waveZ] ?? 1;
+      waveTypeVec[3] = waveTypeMap[waveW] ?? 1;
+      const dpr = window.devicePixelRatio || 1;
+      const uniforms = {
+        pointSize: 4.0 * dpr,
+        freqs: [fx, fy, fz, fw],
+        phases: [phx, phy, phz, phw],
+        waveTypes: waveTypeVec,
+        rot3D: [ay, ax, az],
+        rot4D1: [aXY, aXZ, aXW],
+        rot4D2: [aYZ, aYW, aZW],
+        camZ,
+        scale: [scaleX, scaleY],
+        alphaFrac
+      };
 
-      // MAIN wave draw
-      for (let i = 0; i < n; i++) {
-        let t = timeArray[i];
-        let angleX = 2 * Math.PI * fx * t + phx;
-        let angleY = 2 * Math.PI * fy * t + phy;
-        let angleZ = 2 * Math.PI * fz * t + phz;
-        let angleW = 2 * Math.PI * fw * t + phw;
-
-        let x4 = getWaveValue(waveX, angleX);
-        let y4 = getWaveValue(waveY, angleY);
-        let z4 = getWaveValue(waveZ, angleZ);
-        let w4 = getWaveValue(waveW, angleW);
-
-        let v4 = { x: x4, y: y4, z: z4, w: w4 };
-        v4 = rotateXY(v4, aXY);
-        v4 = rotateXZ(v4, aXZ);
-        v4 = rotateXW(v4, aXW);
-        v4 = rotateYZ(v4, aYZ);
-        v4 = rotateYW(v4, aYW);
-        v4 = rotateZW(v4, aZW);
-
-        let allZero4D = (aXW === 0 && aYW === 0 && aZW === 0);
-        let effW = allZero4D ? 0 : v4.w;
-        let d4 = 5;
-        let factor4 = d4 / (d4 - effW);
-        let x3 = v4.x * factor4;
-        let y3 = v4.y * factor4;
-        let z3 = v4.z * factor4;
-
-        // mismatch param => rotateXYZ(..., ay, ax, az)
-        let { x: xr, y: yr, z: zr } = rotateXYZ(x3, y3, z3, ay, ax, az);
-
-        let denom = camZ - zr;
-        if (Math.abs(denom) < 1e-5) continue;
-        let px = halfWidth + (xr / denom) * scale;
-        let py = halfHeight - (yr / denom) * scale;
-
-        let clipX = (px / width) * 2 - 1;
-        let clipY = (py / height) * -2 + 1;
-        pointPositions[posOffset++] = clipX;
-        pointPositions[posOffset++] = clipY;
-
-        let hue = (zr + 1) * 180;
-        let normalizedHue = (((hue % 360) + 360) % 360) / 360;
-        let rgb = hslToRgb(normalizedHue, 1, 0.5);
-        let mix = alphaFrac;
-        let rCol = OFF_WHITE.r * (1 - mix) + rgb.r * mix;
-        let gCol = OFF_WHITE.g * (1 - mix) + rgb.g * mix;
-        let bCol = OFF_WHITE.b * (1 - mix) + rgb.b * mix;
-        pointColors[colorOffset++] = rCol;
-        pointColors[colorOffset++] = gCol;
-        pointColors[colorOffset++] = bCol;
-        pointColors[colorOffset++] = 1.0;
-
-        pointCount++;
-      }
-
-      renderPoints(pointCount);
+      renderPoints(pointCount, uniforms);
 
       wireCtx.clearRect(0, 0, wireCanvas.width, wireCanvas.height);
       if (wireframeBtn.dataset.wireframe === 'on') {
