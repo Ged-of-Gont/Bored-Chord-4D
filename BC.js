@@ -92,6 +92,7 @@
     /********************************************************
      * FREQUENCIES & LFO SLIDERS
      ********************************************************/
+    const frameModeSelect = document.getElementById("frameMode");
     const freqXInput = document.getElementById("freqX");
     const freqYInput = document.getElementById("freqY");
     const freqZInput = document.getElementById("freqZ");
@@ -240,6 +241,7 @@
       uniform float u_scaleY;
       uniform float u_alphaFrac;
       uniform float u_pointSize;
+      uniform int u_coordMode;
 
       const float PI = 3.1415926535897932384626433832795;
       const vec3 OFF_WHITE = vec3(0.9843137, 0.9647058, 0.8941176);
@@ -333,7 +335,19 @@
         float z4 = getWaveValue(u_waveTypes.z, angleZ);
         float w4 = getWaveValue(u_waveTypes.w, angleW);
 
-        vec4 v4 = vec4(x4, y4, z4, w4);
+        vec4 v4;
+        if (u_coordMode == 0) {
+          v4 = vec4(x4, y4, z4, w4);
+        } else {
+          vec4 normed = vec4(x4, y4, z4, w4);
+          float len = length(normed);
+          if (len < 1e-6) {
+            normed = vec4(0.0, 0.0, 0.0, 1.0);
+          } else {
+            normed /= len;
+          }
+          v4 = normed;
+        }
         v4 = rotateXY(v4, u_rot4D_1.x);
         v4 = rotateXZ(v4, u_rot4D_1.y);
         v4 = rotateXW(v4, u_rot4D_1.z);
@@ -424,6 +438,7 @@
     const scaleXLoc = gl.getUniformLocation(pointProgram, "u_scaleX");
     const scaleYLoc = gl.getUniformLocation(pointProgram, "u_scaleY");
     const alphaLoc = gl.getUniformLocation(pointProgram, "u_alphaFrac");
+    const coordModeLoc = gl.getUniformLocation(pointProgram, "u_coordMode");
     const timeBuffer = gl.createBuffer();
     const waveTypeVec = new Int32Array(4);
     gl.enable(gl.BLEND);
@@ -457,6 +472,7 @@
       gl.uniform1f(scaleXLoc, uniforms.scale[0]);
       gl.uniform1f(scaleYLoc, uniforms.scale[1]);
       gl.uniform1f(alphaLoc, uniforms.alphaFrac);
+      gl.uniform1i(coordModeLoc, uniforms.coordMode);
 
       gl.bindBuffer(gl.ARRAY_BUFFER, timeBuffer);
       gl.enableVertexAttribArray(timeLoc);
@@ -530,11 +546,11 @@
     }
     const hypercubeEdges = [];
     for (let i = 0; i < 16; i++) {
-      for (let bit = 0; bit < 4; bit++) {
-        let j = i ^ (1 << bit);
-        if (j > i) hypercubeEdges.push([i, j]);
-      }
+    for (let bit = 0; bit < 4; bit++) {
+      let j = i ^ (1 << bit);
+      if (j > i) hypercubeEdges.push([i, j]);
     }
+  }
     const cube3DVertices = [
       { x: -1, y: -1, z: -1, w: 0 },
       { x: 1,  y: -1, z: -1, w: 0 },
@@ -551,37 +567,109 @@
       [0,4],[1,5],[2,6],[3,7]
     ];
 
-    // Draw wireframe
-    function drawWireframe(ax, ay, az, aXY, aXZ, aXW, aYZ, aYW, aZW, camZ) {
+    function buildHypersphereFrameData() {
+      const latLoops = [];
+      const meridianLoops = [];
+      const guideLines = [];
+      const latCount = 6;
+      const meridianCount = 12;
+      const segments = 72;
+
+      for (let i = 1; i < latCount; i++) {
+        let phi = -Math.PI / 2 + (i / latCount) * Math.PI;
+        let loop = [];
+        let cosPhi = Math.cos(phi);
+        let sinPhi = Math.sin(phi);
+        for (let s = 0; s <= segments; s++) {
+          let theta = (s / segments) * 2 * Math.PI;
+          let x = cosPhi * Math.cos(theta);
+          let y = cosPhi * Math.sin(theta);
+          let z = sinPhi;
+          loop.push({ x, y, z, w: 0 });
+        }
+        latLoops.push(loop);
+      }
+
+      for (let i = 0; i < meridianCount; i++) {
+        let theta = (i / meridianCount) * 2 * Math.PI;
+        let cosTheta = Math.cos(theta);
+        let sinTheta = Math.sin(theta);
+        let loop = [];
+        for (let s = 0; s <= segments; s++) {
+          let phi = -Math.PI / 2 + (s / segments) * Math.PI;
+          let cosPhi = Math.cos(phi);
+          let sinPhi = Math.sin(phi);
+          loop.push({
+            x: cosPhi * cosTheta,
+            y: cosPhi * sinTheta,
+            z: sinPhi,
+            w: 0
+          });
+        }
+        meridianLoops.push(loop);
+      }
+
+      const guideCount = 8;
+      const guideSegments = 48;
+      for (let i = 0; i < guideCount; i++) {
+        let theta = (i / guideCount) * 2 * Math.PI;
+        let cosTheta = Math.cos(theta);
+        let sinTheta = Math.sin(theta);
+        let line = [];
+        for (let s = -guideSegments; s <= guideSegments; s++) {
+          let t = (s / guideSegments) * (Math.PI / 2);
+          let r = Math.cos(t);
+          let w = Math.sin(t);
+          line.push({
+            x: r * cosTheta,
+            y: r * sinTheta,
+            z: 0,
+            w
+          });
+        }
+        guideLines.push(line);
+      }
+
+      return { latLoops, meridianLoops, guideLines };
+    }
+
+    const hypersphereFrameData = buildHypersphereFrameData();
+
+    function projectPoint(v4, ax, ay, az, aXY, aXZ, aXW, aYZ, aYW, aZW, camZ, scale) {
+      let r = rotateXY(v4, aXY);
+      r = rotateXZ(r, aXZ);
+      r = rotateXW(r, aXW);
+      r = rotateYZ(r, aYZ);
+      r = rotateYW(r, aYW);
+      r = rotateZW(r, aZW);
+
+      let d4 = 5;
+      let factor4 = d4 / (d4 - r.w);
+      let x3 = r.x * factor4;
+      let y3 = r.y * factor4;
+      let z3 = r.z * factor4;
+      let { x: xr, y: yr, z: zr } = rotateXYZ(x3, y3, z3, ay, ax, az);
+
+      let denom = camZ - zr;
+      if (Math.abs(denom) < 1e-5) return null;
+      let px = wireCanvas.width * 0.5 + (xr / denom) * scale;
+      let py = wireCanvas.height * 0.5 - (yr / denom) * scale;
+      return { x: px, y: py };
+    }
+
+    function drawCartesianWireframe(ax, ay, az, aXY, aXZ, aXW, aYZ, aYW, aZW, camZ, scale) {
       wireCtx.save();
       wireCtx.lineWidth = 1;
       wireCtx.setLineDash([4,4]);
       wireCtx.strokeStyle = "rgba(251,246,228,0.5)";
       let hProj = [];
       for (let v of hypercubeVertices) {
-        let r = rotateXY(v, aXY);
-        r = rotateXZ(r, aXZ);
-        r = rotateXW(r, aXW);
-        r = rotateYZ(r, aYZ);
-        r = rotateYW(r, aYW);
-        r = rotateZW(r, aZW);
-
-        let d4 = 5;
-        let factor4 = d4 / (d4 - r.w);
-        let x3 = r.x * factor4;
-        let y3 = r.y * factor4;
-        let z3 = r.z * factor4;
-        let { x: xr, y: yr, z: zr } = rotateXYZ(x3, y3, z3, ay, ax, az);
-
-        let denom = camZ - zr;
-        if (Math.abs(denom) < 1e-5) denom = 1e-5;
-        let scale = Math.min(wireCanvas.width, wireCanvas.height) * 0.45;
-        let px = wireCanvas.width * 0.5 + (xr / denom) * scale;
-        let py = wireCanvas.height * 0.5 - (yr / denom) * scale;
-        hProj.push({ x: px, y: py });
+        let projected = projectPoint(v, ax, ay, az, aXY, aXZ, aXW, aYZ, aYW, aZW, camZ, scale);
+        hProj.push(projected);
       }
       for (let [start, end] of hypercubeEdges) {
         let A = hProj[start], B = hProj[end];
+        if (!A || !B) continue;
         wireCtx.beginPath();
         wireCtx.moveTo(A.x, A.y);
         wireCtx.lineTo(B.x, B.y);
@@ -595,34 +683,74 @@
       wireCtx.strokeStyle = "rgba(251,246,228,0.5)";
       let cProj = [];
       for (let v of cube3DVertices) {
-        let r = rotateXY(v, aXY);
-        r = rotateXZ(r, aXZ);
-        r = rotateXW(r, aXW);
-        r = rotateYZ(r, aYZ);
-        r = rotateYW(r, aYW);
-        r = rotateZW(r, aZW);
-
-        let d4 = 5;
-        let factor4 = d4 / (d4 - r.w);
-        let x3 = r.x * factor4;
-        let y3 = r.y * factor4;
-        let z3 = r.z * factor4;
-        let { x: xr, y: yr, z: zr } = rotateXYZ(x3, y3, z3, ay, ax, az);
-
-        let denom = camZ - zr;
-        if (Math.abs(denom) < 1e-5) denom = 1e-5;
-        let scale = Math.min(wireCanvas.width, wireCanvas.height) * 0.45;
-        let px = wireCanvas.width * 0.5 + (xr / denom) * scale;
-        let py = wireCanvas.height * 0.5 - (yr / denom) * scale;
-        cProj.push({ x: px, y: py });
+        let projected = projectPoint(v, ax, ay, az, aXY, aXZ, aXW, aYZ, aYW, aZW, camZ, scale);
+        cProj.push(projected);
       }
       for (let [start, end] of cube3DEdges) {
         let A = cProj[start], B = cProj[end];
+        if (!A || !B) continue;
         wireCtx.beginPath();
         wireCtx.moveTo(A.x, A.y);
         wireCtx.lineTo(B.x, B.y);
         wireCtx.stroke();
       }
+      wireCtx.restore();
+    }
+
+    function drawHypersphereWireframe(ax, ay, az, aXY, aXZ, aXW, aYZ, aYW, aZW, camZ, scale) {
+      const { latLoops, meridianLoops, guideLines } = hypersphereFrameData;
+
+      const drawLoopSet = (loops, lineWidth, dashArray, color) => {
+        wireCtx.lineWidth = lineWidth;
+        wireCtx.setLineDash(dashArray);
+        wireCtx.strokeStyle = color;
+        loops.forEach(loop => {
+          let started = false;
+          wireCtx.beginPath();
+          for (let point of loop) {
+            let proj = projectPoint(point, ax, ay, az, aXY, aXZ, aXW, aYZ, aYW, aZW, camZ, scale);
+            if (!proj) {
+              started = false;
+              continue;
+            }
+            if (!started) {
+              wireCtx.moveTo(proj.x, proj.y);
+              started = true;
+            } else {
+              wireCtx.lineTo(proj.x, proj.y);
+            }
+          }
+          wireCtx.stroke();
+        });
+      };
+
+      wireCtx.save();
+      drawLoopSet(latLoops, 2, [], "rgba(251,246,228,0.65)");
+      drawLoopSet(meridianLoops, 1.5, [8, 8], "rgba(251,246,228,0.4)");
+      wireCtx.restore();
+
+      wireCtx.save();
+      wireCtx.lineWidth = 1.25;
+      wireCtx.setLineDash([5, 12]);
+      wireCtx.strokeStyle = "rgba(251,246,228,0.45)";
+      guideLines.forEach(line => {
+        wireCtx.beginPath();
+        let started = false;
+        line.forEach(point => {
+          let proj = projectPoint(point, ax, ay, az, aXY, aXZ, aXW, aYZ, aYW, aZW, camZ, scale);
+          if (!proj) {
+            started = false;
+            return;
+          }
+          if (!started) {
+            wireCtx.moveTo(proj.x, proj.y);
+            started = true;
+          } else {
+            wireCtx.lineTo(proj.x, proj.y);
+          }
+        });
+        wireCtx.stroke();
+      });
       wireCtx.restore();
     }
 
@@ -665,13 +793,23 @@
       // your old offset:
       let az = rawAz + Math.PI / 2;
 
-      let vol = getTaperedValue("volumeSlider") || 5;
-      let camZ = 5 - 0.4 * (vol - 1);
-
       let waveX = document.getElementById("waveTypeX").dataset.wave;
       let waveY = document.getElementById("waveTypeY").dataset.wave;
       let waveZ = document.getElementById("waveTypeZ").dataset.wave;
       let waveW = document.getElementById("waveTypeW").dataset.wave;
+      const isHypersphere = frameModeSelect && frameModeSelect.value === 's3';
+      const coordModeFlag = isHypersphere ? 1 : 0;
+
+      let vol = getTaperedValue("volumeSlider") || 5;
+      let camZ;
+      const zoomNorm = Math.min(Math.max((vol - 1) / 10, 0), 1);
+      if (isHypersphere) {
+        const hyperFar = 8.0;
+        const hyperNear = 1.35;
+        camZ = hyperFar - (hyperFar - hyperNear) * zoomNorm;
+      } else {
+        camZ = 5 - 0.4 * (vol - 1);
+      }
 
       // read 4D angles
       let aXY = getContinuousAngle("angle4DXYRange");
@@ -687,7 +825,10 @@
       const width = glCanvas.width || 1;
       const height = glCanvas.height || 1;
       const minDim = Math.min(width, height);
-      const scalePx = minDim * 0.45;
+      const baseScaleFactor = isHypersphere ? 0.55 : 0.45;
+      const scalePx = minDim * baseScaleFactor;
+      const wireBase = Math.min(wireCanvas.width || 1, wireCanvas.height || 1) * baseScaleFactor;
+      const wireScale = wireBase;
       const scaleX = width > 0 ? scalePx / (width * 0.5) : 1;
       const scaleY = height > 0 ? scalePx / (height * 0.5) : 1;
       const waveTypeMap = { off: 0, sine: 1, triangle: 2 };
@@ -706,14 +847,19 @@
         rot4D2: [aYZ, aYW, aZW],
         camZ,
         scale: [scaleX, scaleY],
-        alphaFrac
+        alphaFrac,
+        coordMode: coordModeFlag
       };
 
       renderPoints(pointCount, uniforms);
 
       wireCtx.clearRect(0, 0, wireCanvas.width, wireCanvas.height);
       if (wireframeBtn.dataset.wireframe === 'on') {
-        drawWireframe(ax, ay, az, aXY, aXZ, aXW, aYZ, aYW, aZW, camZ);
+        if (isHypersphere) {
+          drawHypersphereWireframe(ax, ay, az, aXY, aXZ, aXW, aYZ, aYW, aZW, camZ, wireScale);
+        } else {
+          drawCartesianWireframe(ax, ay, az, aXY, aXZ, aXW, aYZ, aYW, aZW, camZ, wireScale);
+        }
       }
 
       requestAnimationFrame(drawFrame);
