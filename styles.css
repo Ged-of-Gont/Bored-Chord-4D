@@ -1,301 +1,351 @@
  /*========================================================
       1) ROOT VARIABLES
     ========================================================*/
-    :root {
-        /* Color Palette */
-        --background: #141213;      /* off-black */
-        --primary: #FBF6E4;         /* off-white */
-        --primary-accent: #c9c3ad;  /* darker off-white */
-        --secondary: #DC143C;       /* red */
-        --secondary-accent: #00FF7E;/* spring green */
-        --black-accent: #393737;    /* dark grey */
-        
-        /* Layout Properties */
-        --slider-width: 200px;
-        --auto-width: 35px;
-      }
-  
-      /*========================================================
+ :root {
+   /* Color Palette */
+   --background: #141213;
+   /* off-black */
+   --primary: #FBF6E4;
+   /* off-white */
+   --primary-accent: #c9c3ad;
+   /* darker off-white */
+   --secondary: #DC143C;
+   /* red */
+   --secondary-accent: #00FF7E;
+   /* spring green */
+   --black-accent: #393737;
+   /* dark grey */
+
+   /* Layout Properties */
+   --slider-width: 200px;
+   --auto-width: 35px;
+ }
+
+ /*========================================================
         2) GLOBAL ELEMENTS & LAYOUT
       ========================================================*/
-      body {
-        background: var(--background);
-        margin: 0;
-        overflow: hidden;
-        color: var(--primary-accent);
-        font-family: 'Martian Mono', monospace;
-        font-weight: 200;
-        font-size: 1em;
-      }
-      h4 {
-        font-family: 'Martian Mono', monospace;
-        font-weight: 600;
-        font-size: 3.1em;
-      }
-      .section h4 {
-        margin-bottom: 25px; /* Adjust as needed */
-      }
-      .wireframe-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      }
-  
-      /*========================================================
+ body {
+   background: var(--background);
+   margin: 0;
+   overflow: hidden;
+   color: var(--primary-accent);
+   font-family: 'Martian Mono', monospace;
+   font-weight: 200;
+   font-size: 1em;
+ }
+
+ h4 {
+   font-family: 'Martian Mono', monospace;
+   font-weight: 600;
+   font-size: 3.1em;
+ }
+
+ .section h4 {
+   margin-bottom: 25px;
+   /* Adjust as needed */
+ }
+
+ .wireframe-row {
+   display: flex;
+   justify-content: space-between;
+   align-items: center;
+ }
+
+ /*========================================================
         3) TOOLBAR PANELS
       ========================================================*/
-      #controlsLeft,
-      #controlsRight {
-        width: 400px;
-        padding: 15px;
-        background: rgba(20, 18, 20, 0.5);
-        z-index: 1;
-      }
-      #controlsLeft {
-        position: fixed;
-        top: 10px;
-        left: 10px;
-      }
-      #controlsRight {
-        position: fixed;
-        top: 10px;
-        right: 10px;
-      }
-      .section {
-        margin: 0;
-        padding: 10px 0;
-        border-bottom: 10px solid var(--black-accent);
-      }
-      .section:last-child {
-        margin-bottom: 0;
-        padding-bottom: 0;
-        border-bottom: none;
-      }
-  
-      /*========================================================
+ #controlsLeft,
+ #controlsRight {
+   width: 400px;
+   padding: 15px;
+   background: rgba(20, 18, 20, 0.5);
+   z-index: 1;
+ }
+
+ #controlsLeft {
+   position: fixed;
+   top: 10px;
+   left: 10px;
+ }
+
+ #controlsRight {
+   position: fixed;
+   top: 10px;
+   right: 10px;
+ }
+
+ .section {
+   margin: 0;
+   padding: 10px 0;
+   border-bottom: 10px solid var(--black-accent);
+ }
+
+ .section:last-child {
+   margin-bottom: 0;
+   padding-bottom: 0;
+   border-bottom: none;
+ }
+
+ /*========================================================
         4) LABELS, GRIDS, & GENERAL INPUTS
       ========================================================*/
-      #controlsLeft label {
-        display: grid;
-        grid-template-columns: 150px var(--slider-width) auto;
-        align-items: center;
-        column-gap: 10px;
-        margin-bottom: 20px;
-        min-height: 50px;
-      }
-      #freqSection label.preset {
-        grid-template-columns: 150px auto;
-      }
-      #controlsRight .autoLabel {
-        display: grid;
-        grid-template-columns: var(--auto-width) var(--slider-width) 150px;
-        align-items: center;
-        column-gap: 10px;
-        margin-bottom: 20px;
-        min-height: 50px;
-      }
-      input[type=range],
-      input[type=number] {
-        width: 100%;
-        box-sizing: border-box;
-      }
-  
-      /*========================================================
+ #controlsLeft label {
+   display: grid;
+   grid-template-columns: 150px var(--slider-width) auto;
+   align-items: center;
+   column-gap: 10px;
+   margin-bottom: 20px;
+   min-height: 50px;
+ }
+
+ #freqSection label.preset {
+   grid-template-columns: 150px auto;
+ }
+
+ #controlsRight .autoLabel {
+   display: grid;
+   grid-template-columns: var(--auto-width) var(--slider-width) 150px;
+   align-items: center;
+   column-gap: 10px;
+   margin-bottom: 20px;
+   min-height: 50px;
+ }
+
+ input[type=range],
+ input[type=number] {
+   width: 100%;
+   box-sizing: border-box;
+ }
+
+ /*========================================================
         5) FREQUENCY NUMBER FIELDS
       ========================================================*/
-      #controlsLeft input[type="number"] {
-        width: 50%;
-        height: 2em;
-        border: 5px solid var(--secondary);
-        background-color: var(--background);
-        color: var(--primary);
-        font-size: 1.75em;
-        font-weight: 700;
-        padding: 0.25em;
-        text-align: center;
-      }
-  
-      /* Add a green highlight on focus */
-      #controlsLeft input[type="number"]:focus {
-        outline: none;
-        box-shadow: 0 0 0 3px var(--secondary-accent);
-        border-color: var(--secondary-accent);
-      }
-  
-      /* Remove spin buttons in some browsers */
-      #controlsLeft input[type="number"]::-webkit-inner-spin-button,
-      #controlsLeft input[type="number"]::-webkit-outer-spin-button {
-        -webkit-appearance: none;
-        margin: 0;
-      }
-      #controlsLeft input[type="number"] {
-        -moz-appearance: textfield; /* remove arrows on Firefox */
-      }
-  
-      /*========================================================
+ #controlsLeft input[type="number"] {
+   width: 50%;
+   height: 2em;
+   border: 5px solid var(--secondary);
+   background-color: var(--background);
+   color: var(--primary);
+   font-size: 1.75em;
+   font-weight: 700;
+   padding: 0.25em;
+   text-align: center;
+ }
+
+ /* Add a green highlight on focus */
+ #controlsLeft input[type="number"]:focus {
+   outline: none;
+   box-shadow: 0 0 0 3px var(--secondary-accent);
+   border-color: var(--secondary-accent);
+ }
+
+ /* Remove spin buttons in some browsers */
+ #controlsLeft input[type="number"]::-webkit-inner-spin-button,
+ #controlsLeft input[type="number"]::-webkit-outer-spin-button {
+   -webkit-appearance: none;
+   margin: 0;
+ }
+
+ #controlsLeft input[type="number"] {
+   -moz-appearance: textfield;
+   /* remove arrows on Firefox */
+ }
+
+ /*========================================================
         6) SELECT (CHORD PRESET) STYLING
       ========================================================*/
-      #chordPreset {
-        background-color: var(--primary);
-        color: var(--black-accent);
-        font-family: 'Martian Mono', monospace;
-        font-weight: 300;
-        font-size: 1em;
-        height: 3em;
-        padding: 0.5em 0.75em;
-        border: 3px solid var(--secondary);
-        border-radius: 0;
-        -webkit-appearance: none;
-        -moz-appearance: none;
-        appearance: none;
-      }
-      #chordPreset:focus {
-        outline: none;
-        box-shadow: 0 0 0 3px var(--secondary-accent);
-        border-radius: 0;
-      }
-  
-      /*========================================================
+ #chordPreset {
+   background-color: var(--primary);
+   color: var(--black-accent);
+   font-family: 'Martian Mono', monospace;
+   font-weight: 300;
+   font-size: 1em;
+   height: 3em;
+   padding: 0.5em 0.75em;
+   border: 3px solid var(--secondary);
+   border-radius: 0;
+   -webkit-appearance: none;
+   -moz-appearance: none;
+   appearance: none;
+ }
+
+ #chordPreset:focus {
+   outline: none;
+   box-shadow: 0 0 0 3px var(--secondary-accent);
+   border-radius: 0;
+ }
+
+ #frameMode {
+   background-color: var(--primary);
+   color: var(--black-accent);
+   font-family: 'Martian Mono', monospace;
+   font-weight: 300;
+   font-size: 1em;
+   height: 3em;
+   padding: 0.5em 0.75em;
+   border: 3px solid var(--secondary);
+   border-radius: 0;
+   -webkit-appearance: none;
+   -moz-appearance: none;
+   appearance: none;
+ }
+
+ #frameMode:focus {
+   outline: none;
+   box-shadow: 0 0 0 3px var(--secondary-accent);
+   border-radius: 0;
+ }
+
+
+ /*========================================================
         7) RANGE (SLIDER) STYLING
       ========================================================*/
-      input[type=range] {
-        -webkit-appearance: none;
-        -moz-appearance: none;
-        background: transparent;
-        --range-progress: 50%;
-        cursor: pointer;
-      }
-      input[type=range]::-webkit-slider-runnable-track {
-        height: 25px;
-        border-radius: 15px;
-        background: linear-gradient(
-          to right,
-          var(--secondary) 0%,
-          var(--secondary) var(--range-progress),
-          var(--primary)   var(--range-progress),
-          var(--primary)   100%
-        );
-      }
-      input[type=range]::-webkit-slider-thumb {
-        -webkit-appearance: none;
-        height: 48px;
-        width: 48px;
-        border-radius: 50%;
-        background: var(--primary-accent);
-        border: none;
-        margin-top: -11.5px;
-        outline: none;
-      }
-      input[type=range]::-moz-range-track {
-        height: 25px;
-        border-radius: 15px;
-        background: linear-gradient(
-          to right,
-          var(--secondary) 0%,
-          var(--secondary) var(--range-progress),
-          var(--primary)   var(--range-progress),
-          var(--primary)   100%
-        );
-      }
-      input[type=range]::-moz-range-thumb {
-        height: 48px;
-        width: 48px;
-        border-radius: 50%;
-        background: var(--primary-accent);
-        border: none;
-        margin-top: -11.5px;
-        outline: none;
-      }
-  
-      /*========================================================
+ input[type=range] {
+   -webkit-appearance: none;
+   -moz-appearance: none;
+   background: transparent;
+   --range-progress: 50%;
+   cursor: pointer;
+ }
+
+ input[type=range]::-webkit-slider-runnable-track {
+   height: 25px;
+   border-radius: 15px;
+   background: linear-gradient(to right,
+       var(--secondary) 0%,
+       var(--secondary) var(--range-progress),
+       var(--primary) var(--range-progress),
+       var(--primary) 100%);
+ }
+
+ input[type=range]::-webkit-slider-thumb {
+   -webkit-appearance: none;
+   height: 48px;
+   width: 48px;
+   border-radius: 50%;
+   background: var(--primary-accent);
+   border: none;
+   margin-top: -11.5px;
+   outline: none;
+ }
+
+ input[type=range]::-moz-range-track {
+   height: 25px;
+   border-radius: 15px;
+   background: linear-gradient(to right,
+       var(--secondary) 0%,
+       var(--secondary) var(--range-progress),
+       var(--primary) var(--range-progress),
+       var(--primary) 100%);
+ }
+
+ input[type=range]::-moz-range-thumb {
+   height: 48px;
+   width: 48px;
+   border-radius: 50%;
+   background: var(--primary-accent);
+   border: none;
+   margin-top: -11.5px;
+   outline: none;
+ }
+
+ /*========================================================
         8) CHECKBOX AUTO-TOGGLES
       ========================================================*/
-      .autoMaster {
-        -webkit-appearance: none;
-        appearance: none;
-        width: var(--auto-width);
-        height: var(--auto-width);
-        cursor: pointer;
-        position: relative;
-        background-color: var(--primary);
-      }
-      .autoMaster:checked::before {
-        content: "";
-        display: block;
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: url(data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDI3LjAuMCwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPgo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4IgoJIHZpZXdCb3g9IjAgMCAxMjAuOCA5OS4zIiBzdHlsZT0iZW5hYmxlLWJhY2tncm91bmQ6bmV3IDAgMCAxMjAuOCA5OS4zOyIgeG1sOnNwYWNlPSJwcmVzZXJ2ZSI+CjxwYXRoIGQ9Ik02My4xLDk5LjNWNjkuN0gwdi00MGg2My4xVjBsNTcuNyw0OS43TDYzLjEsOTkuM3oiLz4KPC9zdmc+Cg==) no-repeat center center;
-        background-size: contain;
-        background-color: var(--secondary-accent);
-      }
-  
-      /*========================================================
+ .autoMaster {
+   -webkit-appearance: none;
+   appearance: none;
+   width: var(--auto-width);
+   height: var(--auto-width);
+   cursor: pointer;
+   position: relative;
+   background-color: var(--primary);
+ }
+
+ .autoMaster:checked::before {
+   content: "";
+   display: block;
+   position: absolute;
+   top: 0;
+   left: 0;
+   width: 100%;
+   height: 100%;
+   background: url(data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDI3LjAuMCwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPgo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4IgoJIHZpZXdCb3g9IjAgMCAxMjAuOCA5OS4zIiBzdHlsZT0iZW5hYmxlLWJhY2tncm91bmQ6bmV3IDAgMCAxMjAuOCA5OS4zOyIgeG1sOnNwYWNlPSJwcmVzZXJ2ZSI+CjxwYXRoIGQ9Ik02My4xLDk5LjNWNjkuN0gwdi00MGg2My4xVjBsNTcuNyw0OS43TDYzLjEsOTkuM3oiLz4KPC9zdmc+Cg==) no-repeat center center;
+   background-size: contain;
+   background-color: var(--secondary-accent);
+ }
+
+ /*========================================================
         9) SAVE/LOAD/INITIALIZE BUTTONS
       ========================================================*/
-      .saveLoadBtn {
-        display: inline-block;
-        background: var(--secondary); /* Red */
-        color: var(--primary);        /* Off-white */
-        font-family: 'Martian Mono', monospace;
-        font-weight: 500;
-        font-size: 1em;
-        border: none;
-        cursor: pointer;
-        width: 120px;
-        height: 40px;
-        margin: 10px 0;
-      }
-      .saveLoadBtnRow {
-        display: flex;
-        justify-content: space-between;
-      }
-      .saveLoadBtn:hover {
-        background: var(--secondary-accent); /* e.g. spring green highlight */
-        color: var(--background);            /* black-ish text or your choice */
-      }
-  
-      /*========================================================
+ .saveLoadBtn {
+   display: inline-block;
+   background: var(--secondary);
+   /* Red */
+   color: var(--primary);
+   /* Off-white */
+   font-family: 'Martian Mono', monospace;
+   font-weight: 500;
+   font-size: 1em;
+   border: none;
+   cursor: pointer;
+   width: 120px;
+   height: 40px;
+   margin: 10px 0;
+ }
+
+ .saveLoadBtnRow {
+   display: flex;
+   justify-content: space-between;
+ }
+
+ .saveLoadBtn:hover {
+   background: var(--secondary-accent);
+   /* e.g. spring green highlight */
+   color: var(--background);
+   /* black-ish text or your choice */
+ }
+
+ /*========================================================
         10) WAVE/WIREFRAME TOGGLE BUTTONS
       ========================================================*/
-      .wave-type-btn {
-        width: 50px;
-        height: 50px;
-        background: var(--secondary);
-        color: var(--primary);
-        font-family: 'Martian Mono', monospace;
-        font-weight: 500;
-        border: none;
-        cursor: pointer;
-        margin-left: -30px;
-      }
-      .wave-type-btn[data-wave="off"],
-      .wave-type-btn[data-wireframe="off"] {
-        background: var(--background);
-        color: var(--secondary);
-        border: 3px solid var(--secondary);
-      }
-  
-      /*========================================================
+ .wave-type-btn {
+   width: 50px;
+   height: 50px;
+   background: var(--secondary);
+   color: var(--primary);
+   font-family: 'Martian Mono', monospace;
+   font-weight: 500;
+   border: none;
+   cursor: pointer;
+   margin-left: -30px;
+ }
+
+ .wave-type-btn[data-wave="off"],
+ .wave-type-btn[data-wireframe="off"] {
+   background: var(--background);
+   color: var(--secondary);
+   border: 3px solid var(--secondary);
+ }
+
+ /*========================================================
         11) CANVAS
       ========================================================*/
-      #canvasWrapper {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        z-index: 0;
-      }
-      #canvasWrapper canvas {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        display: block;
-        pointer-events: none;
-      }
-  
+ #canvasWrapper {
+   position: fixed;
+   top: 0;
+   left: 0;
+   width: 100vw;
+   height: 100vh;
+   z-index: 0;
+ }
+
+ #canvasWrapper canvas {
+   position: absolute;
+   top: 0;
+   left: 0;
+   width: 100%;
+   height: 100%;
+   display: block;
+   pointer-events: none;
+ }

@@ -804,8 +804,8 @@
       let camZ;
       const zoomNorm = Math.min(Math.max((vol - 1) / 10, 0), 1);
       if (isHypersphere) {
-        const hyperFar = 8.0;
-        const hyperNear = 1.35;
+        const hyperFar = 5.0;
+        const hyperNear = 1.12;
         camZ = hyperFar - (hyperFar - hyperNear) * zoomNorm;
       } else {
         camZ = 5 - 0.4 * (vol - 1);
@@ -825,7 +825,7 @@
       const width = glCanvas.width || 1;
       const height = glCanvas.height || 1;
       const minDim = Math.min(width, height);
-      const baseScaleFactor = isHypersphere ? 0.55 : 0.45;
+      const baseScaleFactor = isHypersphere ? 0.67 : 0.45;
       const scalePx = minDim * baseScaleFactor;
       const wireBase = Math.min(wireCanvas.width || 1, wireCanvas.height || 1) * baseScaleFactor;
       const wireScale = wireBase;

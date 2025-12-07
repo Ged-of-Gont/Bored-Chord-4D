@@ -39,6 +39,7 @@
         <input id="freqW" type="number" value="6" step="0.1">
         <button id="waveTypeW" class="wave-type-btn" data-wave="sine">SINE</button>
       </label>
+      
       <label class="preset">
         <span>Chord Presets:</span>
         <select id="chordPreset">
@@ -86,25 +87,30 @@
         <span>Volume: <span id="volVal">5</span></span>
         <input id="volumeSlider" type="range" min="0" max="100" step="0.5" value="75">
       </label>
+      
       <label>
         <span>Δt per Point: <span id="dtVal"></span></span>
         <input id="dtSlider" type="range" min="0" max="100" step="0.5" value="40">
       </label>
+      
       <label>
         <span># Points: <span id="numPointsVal"></span></span>
         <input id="numPointsSlider" type="range" min="0" max="100" step="0.5" value="65">
       </label>
+      
       <label>
         <span>Curve Color: <span id="saturationVal"></span></span>
         <input id="saturationSlider" type="range" min="0" max="100" step="0.5" value="0">
       </label>
+
       <label class="wireframe-row">
-        <span>Frame Mode:</span>
+        <span>Space Mode:</span>
         <select id="frameMode">
-          <option value="cartesian">Cartesian</option>
-          <option value="s3">Hypersphere</option>
+          <option value="cartesian">Hypercubical</option>
+          <option value="s3">Hyperspherical</option>
         </select>
       </label>
+
       <label class="wireframe-row">
         <span>4D Spacial Wireframe:</span>
         <button id="wireframeBtn" class="wave-type-btn" data-wireframe="off">OFF</button>
