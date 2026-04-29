@@ -1,5 +1,21 @@
 # BORED CHORD 4D
 
+## Running locally
+
+This repo now includes a tiny zero-dependency dev server, so there is no need to open the app over `file://`.
+
+```bash
+npm run dev
+```
+
+Then open `http://127.0.0.1:4173`.
+
+You can override the port if you want:
+
+```bash
+PORT=3000 npm run dev
+```
+
 This is a program born of the question: what would a 3D Bowditch curve look like? 
 
 Bowditch curves, also known as Lissajous curves show how two waveforms interact when they are plotted as the X,Y coordinates on a grid.
@@ -150,4 +166,3 @@ into 3 dimnesions which looks like some kind of 3D cubist cross. He called this 
                                                                                                                                                    
                                                                                                                                                    
                                                                                                                              
-
